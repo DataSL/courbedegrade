@@ -1,0 +1,34 @@
+{
+  "dataRoles": [
+    {
+      "displayName": "Date",
+      "name": "category",
+      "kind": "Grouping"
+    },
+    {
+      "displayName": "Valeur",
+      "name": "measure",
+      "kind": "Measure"
+    }
+  ],
+  "objects": {
+    "styleLigne": {
+      "displayName": "Style",
+      "properties": {
+        "mainColor": {
+          "displayName": "Couleur",
+          "type": { "fill": { "solid": { "color": true } } }
+        }
+      }
+    }
+  },
+  "dataViewMappings": [
+    {
+      "categorical": {
+        "categories": { "for": { "in": "category" } },
+        "values": { "select": [ { "bind": { "to": "measure" } } ] }
+      }
+    }
+  ],
+  "privileges": []
+}
