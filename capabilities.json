@@ -6,8 +6,13 @@
       "kind": "Grouping"
     },
     {
-      "displayName": "Valeurs",
-      "name": "measure",
+      "displayName": "Valeur 1",
+      "name": "measure1",
+      "kind": "Measure"
+    },
+    {
+      "displayName": "Valeur 2",
+      "name": "measure2",
       "kind": "Measure"
     }
   ],
@@ -28,7 +33,12 @@
           "select": [
             {
               "bind": {
-                "to": "measure"
+                "to": "measure1"
+              }
+            },
+            {
+              "bind": {
+                "to": "measure2"
               }
             }
           ]
@@ -37,17 +47,8 @@
     }
   ],
   "objects": {
-    "styleLigne": {
-      "displayName": "Style",
-      "properties": {
-        "mainColor": {
-          "displayName": "Couleur",
-          "type": { "fill": { "solid": { "color": true } } }
-        }
-      }
-    },
     "lineSettings": {
-      "displayName": "Ligne",
+      "displayName": "Ligne 1",
       "properties": {
         "lineColor": {
           "displayName": "Couleur de la ligne",
@@ -56,7 +57,7 @@
       }
     },
     "gradientSettings": {
-      "displayName": "Dégradé",
+      "displayName": "Dégradé 1",
       "properties": {
         "gradientColor": {
           "displayName": "Couleur du dégradé",
@@ -78,6 +79,50 @@
               { "value": "diagonal-reverse", "displayName": "Diagonale ↙" }
             ]
           }
+        }
+      }
+    },
+    "secondLineSettings": {
+      "displayName": "Ligne 2",
+      "properties": {
+        "lineColor2": {
+          "displayName": "Couleur de la ligne",
+          "type": { "fill": { "solid": { "color": true } } }
+        }
+      }
+    },
+    "secondGradientSettings": {
+      "displayName": "Dégradé 2",
+      "properties": {
+        "gradientColor2": {
+          "displayName": "Couleur du dégradé",
+          "type": { "fill": { "solid": { "color": true } } }
+        },
+        "gradientIntensity2": {
+          "displayName": "Intensité (0-1)",
+          "type": { "numeric": true }
+        },
+        "gradientDirection2": {
+          "displayName": "Direction",
+          "type": {
+            "enumeration": [
+              { "value": "vertical", "displayName": "Haut → Bas" },
+              { "value": "vertical-reverse", "displayName": "Bas → Haut" },
+              { "value": "horizontal", "displayName": "Gauche → Droite" },
+              { "value": "horizontal-reverse", "displayName": "Droite → Gauche" },
+              { "value": "diagonal", "displayName": "Diagonale ↘" },
+              { "value": "diagonal-reverse", "displayName": "Diagonale ↙" }
+            ]
+          }
+        }
+      }
+    },
+    "axisSettings": {
+      "displayName": "Axes",
+      "properties": {
+        "useYAxisBis": {
+          "displayName": "Afficher axe Y bis",
+          "type": { "bool": true }
         }
       }
     }

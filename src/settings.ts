@@ -43,7 +43,7 @@ class LineSettingsCard extends FormattingSettingsCard {
     });
 
     name: string = "lineSettings";
-    displayName: string = "Ligne";
+    displayName: string = "Ligne 1";
     slices: Array<FormattingSettingsSlice> = [this.lineColor];
 }
 
@@ -78,17 +78,90 @@ class GradientSettingsCard extends FormattingSettingsCard {
     });
 
     name: string = "gradientSettings";
-    displayName: string = "Dégradé";
+    displayName: string = "Dégradé 1";
     slices: Array<FormattingSettingsSlice> = [this.gradientColor, this.gradientIntensity, this.gradientDirection];
+}
+
+/**
+ * Second Line Settings Card
+ */
+class SecondLineSettingsCard extends FormattingSettingsCard {
+    lineColor2 = new formattingSettings.ColorPicker({
+        name: "lineColor2",
+        displayName: "Couleur de la ligne",
+        value: { value: "#E94F37" }
+    });
+
+    name: string = "secondLineSettings";
+    displayName: string = "Ligne 2";
+    slices: Array<FormattingSettingsSlice> = [this.lineColor2];
+}
+
+/**
+ * Second Gradient Settings Card
+ */
+class SecondGradientSettingsCard extends FormattingSettingsCard {
+    gradientColor2 = new formattingSettings.ColorPicker({
+        name: "gradientColor2",
+        displayName: "Couleur du dégradé",
+        value: { value: "#E94F37" }
+    });
+
+    gradientIntensity2 = new formattingSettings.NumUpDown({
+        name: "gradientIntensity2",
+        displayName: "Intensité (0-1)",
+        value: 0.3
+    });
+
+    gradientDirection2 = new formattingSettings.ItemDropdown({
+        name: "gradientDirection2",
+        displayName: "Direction",
+        items: [
+            { value: "vertical", displayName: "Haut → Bas" },
+            { value: "vertical-reverse", displayName: "Bas → Haut" },
+            { value: "horizontal", displayName: "Gauche → Droite" },
+            { value: "horizontal-reverse", displayName: "Droite → Gauche" },
+            { value: "diagonal", displayName: "Diagonale ↘" },
+            { value: "diagonal-reverse", displayName: "Diagonale ↙" }
+        ],
+        value: { value: "vertical", displayName: "Haut → Bas" }
+    });
+
+    name: string = "secondGradientSettings";
+    displayName: string = "Dégradé 2";
+    slices: Array<FormattingSettingsSlice> = [this.gradientColor2, this.gradientIntensity2, this.gradientDirection2];
+}
+
+/**
+ * Axis Settings Card
+ */
+class AxisSettingsCard extends FormattingSettingsCard {
+    useYAxisBis = new formattingSettings.ToggleSwitch({
+        name: "useYAxisBis",
+        displayName: "Afficher axe Y bis",
+        value: false
+    });
+
+    name: string = "axisSettings";
+    displayName: string = "Axes";
+    slices: Array<FormattingSettingsSlice> = [this.useYAxisBis];
 }
 
 /**
  * Visual settings model class
  */
 export class VisualFormattingSettingsModel extends FormattingSettingsModel {
-    // Create formatting settings model formatting cards
     lineSettingsCard = new LineSettingsCard();
     gradientSettingsCard = new GradientSettingsCard();
+    secondLineSettingsCard = new SecondLineSettingsCard();
+    secondGradientSettingsCard = new SecondGradientSettingsCard();
+    axisSettingsCard = new AxisSettingsCard();
 
-    cards = [this.lineSettingsCard, this.gradientSettingsCard];
+    cards = [
+        this.lineSettingsCard, 
+        this.gradientSettingsCard, 
+        this.secondLineSettingsCard, 
+        this.secondGradientSettingsCard,
+        this.axisSettingsCard
+    ];
 }

@@ -23,8 +23,8 @@ export class Visual implements IVisual {
     private axisGroup: SVGGElement;
     private gradient: SVGLinearGradientElement;
 
-    // Marges
-    private margin = { top: 20, right: 40, bottom: 40, left: 60 };
+    // Marges (Right 80 pour l'axe Y bis)
+    private margin = { top: 20, right: 80, bottom: 40, left: 60 };
     
     // Settings
     private formattingSettings: VisualFormattingSettingsModel;
@@ -89,9 +89,7 @@ export class Visual implements IVisual {
         this.svg.appendChild(this.mainGroup);
     }
 
-    // Ajoutez cette fonction dans votre classe Visual
     private getNiceStep(maxValue: number): number {
-        // Liste des pas "humains"
         const steps = [1, 2, 2.5, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
         const minTicks = 4;
         const maxTicks = 8;
@@ -101,17 +99,18 @@ export class Visual implements IVisual {
                 return steps[i];
             }
         }
-        // Si rien trouvé, retourne le plus grand pas
         return steps[steps.length - 1];
     }
 
     public update(options: VisualUpdateOptions) {
+        const ns = "http://www.w3.org/2000/svg";
+        
         // A. Récupération des données
         const dataView = options.dataViews[0];
         if (!dataView || !dataView.categorical) return;
         if (!dataView.categorical.categories || !dataView.categorical.values) return;
 
-        // Récupération des settings APRÈS avoir vérifié que dataView existe
+        // Récupération des settings
         this.formattingSettings = this.formattingSettingsService.populateFormattingSettingsModel(VisualFormattingSettingsModel, options.dataViews[0]);
         
         // Redimensionnement du SVG
@@ -119,60 +118,81 @@ export class Visual implements IVisual {
         this.svg.setAttribute("height", options.viewport.height.toString());
 
         const cats = dataView.categorical.categories[0].values;
-        const vals = dataView.categorical.values[0].values;
+        const vals1 = dataView.categorical.values[0]?.values;
+        const vals2 = dataView.categorical.values[1]?.values;
 
-        // B. Appliquer les paramètres de couleur et dégradé
+        // B. Appliquer les paramètres pour la courbe 1
         const lineColor = this.formattingSettings.lineSettingsCard.lineColor.value.value;
         const gradientColor = this.formattingSettings.gradientSettingsCard.gradientColor.value.value;
         const gradientIntensity = this.formattingSettings.gradientSettingsCard.gradientIntensity.value;
         const gradientDirection = this.formattingSettings.gradientSettingsCard.gradientDirection.value.value.toString();
         
-        // Appliquer la couleur de ligne
         this.pathLine.setAttribute("stroke", lineColor);
-        
-        // Appliquer la direction du dégradé
-        this.applyGradientDirection(gradientDirection);
-        
-        // Appliquer la couleur et l'intensité du dégradé
+        this.applyGradientDirection(this.gradient, gradientDirection);
         this.gradientStopTop.setAttribute("stop-color", gradientColor);
         this.gradientStopTop.setAttribute("stop-opacity", Math.max(0, Math.min(1, gradientIntensity)).toString());
         this.gradientStopBottom.setAttribute("stop-color", gradientColor);
-        this.gradientStopBottom.setAttribute("stop-opacity", "0.0");
 
-        // C. Calcul des dimensions de la zone de dessin
+        // C. Paramètres pour la courbe 2
+        const lineColor2 = this.formattingSettings.secondLineSettingsCard.lineColor2.value.value;
+        const gradientColor2 = this.formattingSettings.secondGradientSettingsCard.gradientColor2.value.value;
+        const gradientIntensity2 = this.formattingSettings.secondGradientSettingsCard.gradientIntensity2.value;
+        const gradientDirection2 = this.formattingSettings.secondGradientSettingsCard.gradientDirection2.value.value.toString();
+        const useYAxisBis = this.formattingSettings.axisSettingsCard.useYAxisBis.value;
+
+        // D. Calcul des dimensions
         const width = options.viewport.width;
         const height = options.viewport.height;
         const drawW = width - this.margin.left - this.margin.right;
         const drawH = height - this.margin.top - this.margin.bottom;
 
-        // D. CALCUL DE L'ÉCHELLE Y (step intelligent)
-        let maxDataVal = 0;
-        vals.forEach(v => { if(Number(v) > maxDataVal) maxDataVal = Number(v); });
+        // E. CALCUL ÉCHELLE Y pour courbe 1
+        let maxDataVal1 = 0;
+        if (vals1) vals1.forEach(v => { if(Number(v) > maxDataVal1) maxDataVal1 = Number(v); });
 
-        const stepSize = this.getNiceStep(maxDataVal);
-        let niceMax = Math.ceil(maxDataVal / stepSize) * stepSize;
-        // Si le nombre de ticks est trop grand, réduit niceMax
-        if ((niceMax / stepSize) > 8) {
-            niceMax = stepSize * 8;
+        const stepSize1 = this.getNiceStep(maxDataVal1);
+        let niceMax1 = Math.ceil(maxDataVal1 / stepSize1) * stepSize1;
+        if ((niceMax1 / stepSize1) > 8) niceMax1 = stepSize1 * 8;
+        if (niceMax1 === 0) niceMax1 = stepSize1;
+
+        // F. CALCUL ÉCHELLE Y pour courbe 2
+        let maxDataVal2 = 0;
+        let stepSize2 = 1;
+        let niceMax2 = 1;
+        
+        if (vals2 && vals2.length) {
+            vals2.forEach(v => { if(Number(v) > maxDataVal2) maxDataVal2 = Number(v); });
+            stepSize2 = this.getNiceStep(maxDataVal2);
+            niceMax2 = Math.ceil(maxDataVal2 / stepSize2) * stepSize2;
+            if ((niceMax2 / stepSize2) > 8) niceMax2 = stepSize2 * 8;
+            if (niceMax2 === 0) niceMax2 = stepSize2;
         }
-        if (niceMax === 0) niceMax = stepSize; 
 
-        // E. Calcul des points (X, Y) en pixels
-        const points: [number, number][] = cats.map((cat, i) => {
+        // G. Calcul des points courbe 1
+        const points1: [number, number][] = cats.map((cat, i) => {
             const x = (i / (cats.length - 1)) * drawW;
-            const y = drawH - (Number(vals[i]) / niceMax * drawH);
+            const y = drawH - (Number(vals1[i]) / niceMax1 * drawH);
             return [x, y];
         });
 
-        // F. DESSIN
+        // H. Calcul des points courbe 2
+        let points2: [number, number][] = [];
+        if (vals2 && vals2.length) {
+            points2 = cats.map((cat, i) => {
+                const x = (i / (cats.length - 1)) * drawW;
+                const yMax = useYAxisBis ? niceMax2 : niceMax1;
+                const y = drawH - (Number(vals2[i]) / yMax * drawH);
+                return [x, y];
+            });
+        }
+
+        // I. DESSIN
         this.mainGroup.setAttribute("transform", `translate(${this.margin.left}, ${this.margin.top})`);
         this.axisGroup.innerHTML = "";
 
-        const ns = "http://www.w3.org/2000/svg";
-
-        // 1. DESSINER LA GRILLE Y
-        for(let val = 0; val <= niceMax; val += stepSize) {
-            const yPos = drawH - (val / niceMax * drawH);
+        // 1. GRILLE ET AXE Y gauche (courbe 1)
+        for(let val = 0; val <= niceMax1; val += stepSize1) {
+            const yPos = drawH - (val / niceMax1 * drawH);
 
             const line = document.createElementNS(ns, "line");
             line.setAttribute("x1", "0");
@@ -189,11 +209,29 @@ export class Visual implements IVisual {
             text.setAttribute("alignment-baseline", "middle");
             text.textContent = this.formatNumber(val);
             text.classList.add("axis-text");
+            text.setAttribute("fill", lineColor);
             this.axisGroup.appendChild(text);
         }
 
-        // 2. DESSINER L'AXE X
-        points.forEach((p, i) => {
+        // 2. AXE Y bis (courbe 2) si activé
+        if (useYAxisBis && vals2 && vals2.length) {
+            for(let val = 0; val <= niceMax2; val += stepSize2) {
+                const yPos = drawH - (val / niceMax2 * drawH);
+
+                const text = document.createElementNS(ns, "text");
+                text.setAttribute("x", (drawW + 10).toString());
+                text.setAttribute("y", yPos.toString());
+                text.setAttribute("text-anchor", "start");
+                text.setAttribute("alignment-baseline", "middle");
+                text.textContent = this.formatNumber(val);
+                text.classList.add("axis-text");
+                text.setAttribute("fill", lineColor2);
+                this.axisGroup.appendChild(text);
+            }
+        }
+
+        // 3. AXE X
+        points1.forEach((p, i) => {
             const step = Math.ceil(cats.length / 10); 
             if (i % step !== 0 && i !== cats.length - 1) return; 
             
@@ -214,19 +252,80 @@ export class Visual implements IVisual {
             this.axisGroup.appendChild(text);
         });
 
-        // 3. TRACÉ DES LIGNES ET AIRES
-        if (points.length > 1) {
-            let d = `M ${points[0][0]},${points[0][1]}`;
-            for (let i = 1; i < points.length; i++) {
-                d += ` L ${points[i][0]},${points[i][1]}`;
+        // 4. COURBE 1 (aire + ligne)
+        if (points1.length > 1) {
+            let d1 = `M ${points1[0][0]},${points1[0][1]}`;
+            for (let i = 1; i < points1.length; i++) {
+                d1 += ` L ${points1[i][0]},${points1[i][1]}`;
             }
             
-            this.pathLine.setAttribute("d", d);
+            this.pathLine.setAttribute("d", d1);
 
-            const firstX = points[0][0];
-            const lastX = points[points.length-1][0];
-            const areaData = `${d} L ${lastX},${drawH} L ${firstX},${drawH} Z`;
-            this.pathArea.setAttribute("d", areaData);
+            const firstX = points1[0][0];
+            const lastX = points1[points1.length-1][0];
+            const areaData1 = `${d1} L ${lastX},${drawH} L ${firstX},${drawH} Z`;
+            this.pathArea.setAttribute("d", areaData1);
+        }
+
+        // 5. COURBE 2 (aire + ligne)
+        if (points2.length > 1) {
+            // Créer/récupérer le dégradé 2
+            let gradient2 = this.svg.querySelector("#axonautGradient2") as SVGLinearGradientElement;
+            if (!gradient2) {
+                gradient2 = document.createElementNS(ns, "linearGradient");
+                gradient2.setAttribute("id", "axonautGradient2");
+                
+                const stopTop2 = document.createElementNS(ns, "stop");
+                stopTop2.setAttribute("offset", "0%");
+                stopTop2.classList.add("stop-top-2");
+                gradient2.appendChild(stopTop2);
+
+                const stopBottom2 = document.createElementNS(ns, "stop");
+                stopBottom2.setAttribute("offset", "100%");
+                stopBottom2.setAttribute("stop-opacity", "0.0");
+                stopBottom2.classList.add("stop-bottom-2");
+                gradient2.appendChild(stopBottom2);
+
+                this.svg.querySelector("defs")?.appendChild(gradient2);
+            }
+
+            // Appliquer direction, couleur, intensité
+            this.applyGradientDirection(gradient2, gradientDirection2);
+            const stops2 = gradient2.querySelectorAll("stop");
+            stops2[0].setAttribute("stop-color", gradientColor2);
+            stops2[0].setAttribute("stop-opacity", Math.max(0, Math.min(1, gradientIntensity2)).toString());
+            stops2[1].setAttribute("stop-color", gradientColor2);
+
+            // Aire sous la courbe 2
+            let d2 = `M ${points2[0][0]},${points2[0][1]}`;
+            for (let i = 1; i < points2.length; i++) {
+                d2 += ` L ${points2[i][0]},${points2[i][1]}`;
+            }
+            const areaData2 = `${d2} L ${points2[points2.length-1][0]},${drawH} L ${points2[0][0]},${drawH} Z`;
+
+            let pathArea2 = this.mainGroup.querySelector(".pathArea2") as SVGPathElement;
+            if (!pathArea2) {
+                pathArea2 = document.createElementNS(ns, "path");
+                pathArea2.classList.add("pathArea2");
+                this.mainGroup.insertBefore(pathArea2, this.pathLine);
+            }
+            pathArea2.setAttribute("d", areaData2);
+            pathArea2.setAttribute("fill", "url(#axonautGradient2)");
+            pathArea2.setAttribute("stroke", "none");
+
+            // Ligne courbe 2
+            let pathLine2 = this.mainGroup.querySelector(".pathLine2") as SVGPathElement;
+            if (!pathLine2) {
+                pathLine2 = document.createElementNS(ns, "path");
+                pathLine2.classList.add("pathLine2");
+                this.mainGroup.appendChild(pathLine2);
+            }
+            pathLine2.setAttribute("d", d2);
+            pathLine2.setAttribute("fill", "none");
+            pathLine2.setAttribute("stroke", lineColor2);
+            pathLine2.setAttribute("stroke-width", "3");
+            pathLine2.setAttribute("stroke-linecap", "round");
+            pathLine2.setAttribute("stroke-linejoin", "round");
         }
     }
 
@@ -234,43 +333,43 @@ export class Visual implements IVisual {
         return this.formattingSettingsService.buildFormattingModel(this.formattingSettings);
     }
 
-    private applyGradientDirection(direction: string): void {
+    private applyGradientDirection(gradient: SVGLinearGradientElement, direction: string): void {
         switch(direction) {
             case "vertical":
-                this.gradient.setAttribute("x1", "0");
-                this.gradient.setAttribute("y1", "0");
-                this.gradient.setAttribute("x2", "0");
-                this.gradient.setAttribute("y2", "1");
+                gradient.setAttribute("x1", "0");
+                gradient.setAttribute("y1", "0");
+                gradient.setAttribute("x2", "0");
+                gradient.setAttribute("y2", "1");
                 break;
             case "vertical-reverse":
-                this.gradient.setAttribute("x1", "0");
-                this.gradient.setAttribute("y1", "1");
-                this.gradient.setAttribute("x2", "0");
-                this.gradient.setAttribute("y2", "0");
+                gradient.setAttribute("x1", "0");
+                gradient.setAttribute("y1", "1");
+                gradient.setAttribute("x2", "0");
+                gradient.setAttribute("y2", "0");
                 break;
             case "horizontal":
-                this.gradient.setAttribute("x1", "0");
-                this.gradient.setAttribute("y1", "0");
-                this.gradient.setAttribute("x2", "1");
-                this.gradient.setAttribute("y2", "0");
+                gradient.setAttribute("x1", "0");
+                gradient.setAttribute("y1", "0");
+                gradient.setAttribute("x2", "1");
+                gradient.setAttribute("y2", "0");
                 break;
             case "horizontal-reverse":
-                this.gradient.setAttribute("x1", "1");
-                this.gradient.setAttribute("y1", "0");
-                this.gradient.setAttribute("x2", "0");
-                this.gradient.setAttribute("y2", "0");
+                gradient.setAttribute("x1", "1");
+                gradient.setAttribute("y1", "0");
+                gradient.setAttribute("x2", "0");
+                gradient.setAttribute("y2", "0");
                 break;
             case "diagonal":
-                this.gradient.setAttribute("x1", "0");
-                this.gradient.setAttribute("y1", "0");
-                this.gradient.setAttribute("x2", "1");
-                this.gradient.setAttribute("y2", "1");
+                gradient.setAttribute("x1", "0");
+                gradient.setAttribute("y1", "0");
+                gradient.setAttribute("x2", "1");
+                gradient.setAttribute("y2", "1");
                 break;
             case "diagonal-reverse":
-                this.gradient.setAttribute("x1", "1");
-                this.gradient.setAttribute("y1", "0");
-                this.gradient.setAttribute("x2", "0");
-                this.gradient.setAttribute("y2", "1");
+                gradient.setAttribute("x1", "1");
+                gradient.setAttribute("y1", "0");
+                gradient.setAttribute("x2", "0");
+                gradient.setAttribute("y2", "1");
                 break;
         }
     }

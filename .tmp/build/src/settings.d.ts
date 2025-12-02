@@ -23,11 +23,43 @@ declare class GradientSettingsCard extends FormattingSettingsCard {
     slices: Array<FormattingSettingsSlice>;
 }
 /**
+ * Second Line Settings Card
+ */
+declare class SecondLineSettingsCard extends FormattingSettingsCard {
+    lineColor2: formattingSettings.ColorPicker;
+    name: string;
+    displayName: string;
+    slices: Array<FormattingSettingsSlice>;
+}
+/**
+ * Second Gradient Settings Card
+ */
+declare class SecondGradientSettingsCard extends FormattingSettingsCard {
+    gradientColor2: formattingSettings.ColorPicker;
+    gradientIntensity2: formattingSettings.NumUpDown;
+    gradientDirection2: formattingSettings.ItemDropdown;
+    name: string;
+    displayName: string;
+    slices: Array<FormattingSettingsSlice>;
+}
+/**
+ * Axis Settings Card
+ */
+declare class AxisSettingsCard extends FormattingSettingsCard {
+    useYAxisBis: formattingSettings.ToggleSwitch;
+    name: string;
+    displayName: string;
+    slices: Array<FormattingSettingsSlice>;
+}
+/**
  * Visual settings model class
  */
 export declare class VisualFormattingSettingsModel extends FormattingSettingsModel {
     lineSettingsCard: LineSettingsCard;
     gradientSettingsCard: GradientSettingsCard;
-    cards: (LineSettingsCard | GradientSettingsCard)[];
+    secondLineSettingsCard: SecondLineSettingsCard;
+    secondGradientSettingsCard: SecondGradientSettingsCard;
+    axisSettingsCard: AxisSettingsCard;
+    cards: (LineSettingsCard | GradientSettingsCard | SecondLineSettingsCard | SecondGradientSettingsCard | AxisSettingsCard)[];
 }
 export {};
