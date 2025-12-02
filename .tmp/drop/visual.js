@@ -107,25 +107,100 @@ class Visual {
         const cats = dataView.categorical.categories[0].values;
         const vals1 = dataView.categorical.values[0]?.values;
         const vals2 = dataView.categorical.values[1]?.values;
-        // B. Appliquer les paramètres pour la courbe 1
+        // Noms des séries pour la légende
+        const series1Name = dataView.categorical.values[0]?.source?.displayName || "Valeur 1";
+        const series2Name = dataView.categorical.values[1]?.source?.displayName || "Valeur 2";
+        // B. Récupération des paramètres pour la courbe 1
         const lineColor = this.formattingSettings.lineSettingsCard.lineColor.value.value;
+        const strokeWidth = this.formattingSettings.lineSettingsCard.strokeWidth.value;
+        const lineStyle = this.formattingSettings.lineSettingsCard.lineStyle.value.value.toString();
+        const showMarkers = this.formattingSettings.lineSettingsCard.showMarkers.value;
+        const markerSize = this.formattingSettings.lineSettingsCard.markerSize.value;
+        const stepped = this.formattingSettings.lineSettingsCard.stepped.value;
+        const showGradient = this.formattingSettings.gradientSettingsCard.showGradient.value;
         const gradientColor = this.formattingSettings.gradientSettingsCard.gradientColor.value.value;
         const gradientIntensity = this.formattingSettings.gradientSettingsCard.gradientIntensity.value;
         const gradientDirection = this.formattingSettings.gradientSettingsCard.gradientDirection.value.value.toString();
+        // Application style ligne 1
         this.pathLine.setAttribute("stroke", lineColor);
-        this.applyGradientDirection(this.gradient, gradientDirection);
-        this.gradientStopTop.setAttribute("stop-color", gradientColor);
-        this.gradientStopTop.setAttribute("stop-opacity", Math.max(0, Math.min(1, gradientIntensity)).toString());
-        this.gradientStopBottom.setAttribute("stop-color", gradientColor);
+        this.pathLine.setAttribute("stroke-width", strokeWidth.toString());
+        // Style de ligne (pointillés, etc.)
+        if (lineStyle === "dashed") {
+            this.pathLine.setAttribute("stroke-dasharray", "8,4");
+        }
+        else if (lineStyle === "dotted") {
+            this.pathLine.setAttribute("stroke-dasharray", "2,2");
+        }
+        else {
+            this.pathLine.removeAttribute("stroke-dasharray");
+        }
+        // Appliquer le dégradé
+        if (showGradient) {
+            this.applyGradientDirection(this.gradient, gradientDirection);
+            this.gradientStopTop.setAttribute("stop-color", gradientColor);
+            this.gradientStopTop.setAttribute("stop-opacity", Math.max(0, Math.min(1, gradientIntensity)).toString());
+            this.gradientStopBottom.setAttribute("stop-color", gradientColor);
+            this.pathArea.setAttribute("fill", "url(#axonautGradient)");
+        }
+        else {
+            this.pathArea.setAttribute("fill", "none");
+        }
         // C. Paramètres pour la courbe 2
         const lineColor2 = this.formattingSettings.secondLineSettingsCard.lineColor2.value.value;
+        const strokeWidth2 = this.formattingSettings.secondLineSettingsCard.strokeWidth2.value;
+        const lineStyle2 = this.formattingSettings.secondLineSettingsCard.lineStyle2.value.value.toString();
+        const showMarkers2 = this.formattingSettings.secondLineSettingsCard.showMarkers2.value;
+        const markerSize2 = this.formattingSettings.secondLineSettingsCard.markerSize2.value;
+        const stepped2 = this.formattingSettings.secondLineSettingsCard.stepped2.value;
+        const showGradient2 = this.formattingSettings.secondGradientSettingsCard.showGradient2.value;
         const gradientColor2 = this.formattingSettings.secondGradientSettingsCard.gradientColor2.value.value;
         const gradientIntensity2 = this.formattingSettings.secondGradientSettingsCard.gradientIntensity2.value;
         const gradientDirection2 = this.formattingSettings.secondGradientSettingsCard.gradientDirection2.value.value.toString();
-        const useYAxisBis = this.formattingSettings.axisSettingsCard.useYAxisBis.value;
-        // D. Calcul des dimensions
+        const useYAxisBis = this.formattingSettings.yAxisSettings.useYAxisBis.value;
+        // Paramètres des axes
+        const showXAxis = this.formattingSettings.xAxisSettings.show.value;
+        const xAxisColor = this.formattingSettings.xAxisSettings.axisColor.value.value;
+        const xAxisFontSize = this.formattingSettings.xAxisSettings.fontSize.value;
+        const xAxisFontFamily = this.formattingSettings.xAxisSettings.fontFamily.value.value.toString();
+        const showYAxis = this.formattingSettings.yAxisSettings.show.value;
+        const yAxisColor = this.formattingSettings.yAxisSettings.axisColor.value.value;
+        const yAxisFontSize = this.formattingSettings.yAxisSettings.fontSize.value;
+        const yAxisFontFamily = this.formattingSettings.yAxisSettings.fontFamily.value.value.toString();
+        // Paramètres de la grille
+        const showHorizontalGrid = this.formattingSettings.gridSettings.showHorizontal.value;
+        const showVerticalGrid = this.formattingSettings.gridSettings.showVertical.value;
+        const gridColor = this.formattingSettings.gridSettings.gridColor.value.value;
+        const gridThickness = this.formattingSettings.gridSettings.gridThickness.value;
+        const gridStyle = this.formattingSettings.gridSettings.gridStyle.value.value.toString();
+        // Paramètres des étiquettes de données
+        const showDataLabels = this.formattingSettings.dataLabels.show.value;
+        const dataLabelsColor = this.formattingSettings.dataLabels.color.value.value;
+        const dataLabelsFontSize = this.formattingSettings.dataLabels.fontSize.value;
+        const dataLabelsFontFamily = this.formattingSettings.dataLabels.fontFamily.value.value.toString();
+        const displayUnits = parseInt(this.formattingSettings.dataLabels.displayUnits.value.value.toString());
+        const precision = this.formattingSettings.dataLabels.precision.value;
+        // Paramètres de la légende
+        const showLegend = this.formattingSettings.legend.show.value;
+        const legendPosition = this.formattingSettings.legend.position.value.value.toString();
+        const legendFontColor = this.formattingSettings.legend.fontColor.value.value;
+        const legendFontSize = this.formattingSettings.legend.fontSize.value;
+        const legendFontFamily = this.formattingSettings.legend.fontFamily.value.value.toString();
+        // D. Calcul des dimensions avec ajustement pour la légende
         const width = options.viewport.width;
         const height = options.viewport.height;
+        let legendHeight = 0;
+        if (showLegend && (legendPosition === "Top" || legendPosition === "TopCenter")) {
+            legendHeight = 30;
+            this.margin.top = 20 + legendHeight;
+        }
+        else if (showLegend && (legendPosition === "Bottom" || legendPosition === "BottomCenter")) {
+            legendHeight = 30;
+            this.margin.bottom = 40 + legendHeight;
+        }
+        else {
+            this.margin.top = 20;
+            this.margin.bottom = 40;
+        }
         const drawW = width - this.margin.left - this.margin.right;
         const drawH = height - this.margin.top - this.margin.bottom;
         // E. CALCUL ÉCHELLE Y pour courbe 1
@@ -173,27 +248,37 @@ class Visual {
         this.mainGroup.setAttribute("transform", `translate(${this.margin.left}, ${this.margin.top})`);
         this.axisGroup.innerHTML = "";
         // 1. GRILLE ET AXE Y gauche (courbe 1)
-        for (let val = 0; val <= niceMax1; val += stepSize1) {
-            const yPos = drawH - (val / niceMax1 * drawH);
-            const line = document.createElementNS(ns, "line");
-            line.setAttribute("x1", "0");
-            line.setAttribute("x2", drawW.toString());
-            line.setAttribute("y1", yPos.toString());
-            line.setAttribute("y2", yPos.toString());
-            line.classList.add("grid-line");
-            this.axisGroup.appendChild(line);
-            const text = document.createElementNS(ns, "text");
-            text.setAttribute("x", "-10");
-            text.setAttribute("y", yPos.toString());
-            text.setAttribute("text-anchor", "end");
-            text.setAttribute("alignment-baseline", "middle");
-            text.textContent = this.formatNumber(val);
-            text.classList.add("axis-text");
-            text.setAttribute("fill", lineColor);
-            this.axisGroup.appendChild(text);
+        if (showYAxis) {
+            for (let val = 0; val <= niceMax1; val += stepSize1) {
+                const yPos = drawH - (val / niceMax1 * drawH);
+                // Grille horizontale
+                if (showHorizontalGrid) {
+                    const line = document.createElementNS(ns, "line");
+                    line.setAttribute("x1", "0");
+                    line.setAttribute("x2", drawW.toString());
+                    line.setAttribute("y1", yPos.toString());
+                    line.setAttribute("y2", yPos.toString());
+                    line.setAttribute("stroke", gridColor);
+                    line.setAttribute("stroke-width", gridThickness.toString());
+                    if (gridStyle === "dashed") {
+                        line.setAttribute("stroke-dasharray", "4,4");
+                    }
+                    this.axisGroup.appendChild(line);
+                }
+                const text = document.createElementNS(ns, "text");
+                text.setAttribute("x", "-10");
+                text.setAttribute("y", yPos.toString());
+                text.setAttribute("text-anchor", "end");
+                text.setAttribute("alignment-baseline", "middle");
+                text.textContent = this.formatNumber(val);
+                text.setAttribute("fill", yAxisColor);
+                text.setAttribute("font-size", yAxisFontSize.toString());
+                text.setAttribute("font-family", yAxisFontFamily);
+                this.axisGroup.appendChild(text);
+            }
         }
         // 2. AXE Y bis (courbe 2) si activé
-        if (useYAxisBis && vals2 && vals2.length) {
+        if (useYAxisBis && vals2 && vals2.length && showYAxis) {
             for (let val = 0; val <= niceMax2; val += stepSize2) {
                 const yPos = drawH - (val / niceMax2 * drawH);
                 const text = document.createElementNS(ns, "text");
@@ -202,43 +287,88 @@ class Visual {
                 text.setAttribute("text-anchor", "start");
                 text.setAttribute("alignment-baseline", "middle");
                 text.textContent = this.formatNumber(val);
-                text.classList.add("axis-text");
                 text.setAttribute("fill", lineColor2);
+                text.setAttribute("font-size", yAxisFontSize.toString());
+                text.setAttribute("font-family", yAxisFontFamily);
                 this.axisGroup.appendChild(text);
             }
         }
         // 3. AXE X
-        points1.forEach((p, i) => {
-            const step = Math.ceil(cats.length / 10);
-            if (i % step !== 0 && i !== cats.length - 1)
-                return;
-            const text = document.createElementNS(ns, "text");
-            text.setAttribute("x", p[0].toString());
-            text.setAttribute("y", (drawH + 20).toString());
-            if (i === cats.length - 1) {
-                text.setAttribute("text-anchor", "end");
-            }
-            else if (i === 0) {
-                text.setAttribute("text-anchor", "start");
-            }
-            else {
-                text.setAttribute("text-anchor", "middle");
-            }
-            text.textContent = this.formatDate(cats[i].toString());
-            text.classList.add("axis-text");
-            this.axisGroup.appendChild(text);
-        });
+        if (showXAxis) {
+            points1.forEach((p, i) => {
+                const step = Math.ceil(cats.length / 10);
+                if (i % step !== 0 && i !== cats.length - 1)
+                    return;
+                // Grille verticale
+                if (showVerticalGrid) {
+                    const line = document.createElementNS(ns, "line");
+                    line.setAttribute("x1", p[0].toString());
+                    line.setAttribute("x2", p[0].toString());
+                    line.setAttribute("y1", "0");
+                    line.setAttribute("y2", drawH.toString());
+                    line.setAttribute("stroke", gridColor);
+                    line.setAttribute("stroke-width", gridThickness.toString());
+                    if (gridStyle === "dashed") {
+                        line.setAttribute("stroke-dasharray", "4,4");
+                    }
+                    this.axisGroup.appendChild(line);
+                }
+                const text = document.createElementNS(ns, "text");
+                text.setAttribute("x", p[0].toString());
+                text.setAttribute("y", (drawH + 20).toString());
+                if (i === cats.length - 1) {
+                    text.setAttribute("text-anchor", "end");
+                }
+                else if (i === 0) {
+                    text.setAttribute("text-anchor", "start");
+                }
+                else {
+                    text.setAttribute("text-anchor", "middle");
+                }
+                text.textContent = this.formatDate(cats[i].toString());
+                text.setAttribute("fill", xAxisColor);
+                text.setAttribute("font-size", xAxisFontSize.toString());
+                text.setAttribute("font-family", xAxisFontFamily);
+                this.axisGroup.appendChild(text);
+            });
+        }
         // 4. COURBE 1 (aire + ligne)
         if (points1.length > 1) {
-            let d1 = `M ${points1[0][0]},${points1[0][1]}`;
-            for (let i = 1; i < points1.length; i++) {
-                d1 += ` L ${points1[i][0]},${points1[i][1]}`;
-            }
+            let d1 = stepped ? this.buildSteppedPath(points1) : this.buildSmoothPath(points1);
             this.pathLine.setAttribute("d", d1);
             const firstX = points1[0][0];
             const lastX = points1[points1.length - 1][0];
             const areaData1 = `${d1} L ${lastX},${drawH} L ${firstX},${drawH} Z`;
             this.pathArea.setAttribute("d", areaData1);
+        }
+        // Marqueurs courbe 1
+        this.svg.querySelectorAll(".marker1").forEach(m => m.remove());
+        if (showMarkers && points1.length > 0) {
+            points1.forEach(p => {
+                const circle = document.createElementNS(ns, "circle");
+                circle.classList.add("marker1");
+                circle.setAttribute("cx", (this.margin.left + p[0]).toString());
+                circle.setAttribute("cy", (this.margin.top + p[1]).toString());
+                circle.setAttribute("r", markerSize.toString());
+                circle.setAttribute("fill", lineColor);
+                this.svg.appendChild(circle);
+            });
+        }
+        // Étiquettes de données courbe 1
+        this.svg.querySelectorAll(".dataLabel1").forEach(l => l.remove());
+        if (showDataLabels && points1.length > 0) {
+            points1.forEach((p, i) => {
+                const text = document.createElementNS(ns, "text");
+                text.classList.add("dataLabel1");
+                text.setAttribute("x", (this.margin.left + p[0]).toString());
+                text.setAttribute("y", (this.margin.top + p[1] - 10).toString());
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("fill", dataLabelsColor);
+                text.setAttribute("font-size", dataLabelsFontSize.toString());
+                text.setAttribute("font-family", dataLabelsFontFamily);
+                text.textContent = this.formatDataLabel(Number(vals1[i]), displayUnits, precision);
+                this.svg.appendChild(text);
+            });
         }
         // 5. COURBE 2 (aire + ligne)
         if (points2.length > 1) {
@@ -265,10 +395,7 @@ class Visual {
             stops2[0].setAttribute("stop-opacity", Math.max(0, Math.min(1, gradientIntensity2)).toString());
             stops2[1].setAttribute("stop-color", gradientColor2);
             // Aire sous la courbe 2
-            let d2 = `M ${points2[0][0]},${points2[0][1]}`;
-            for (let i = 1; i < points2.length; i++) {
-                d2 += ` L ${points2[i][0]},${points2[i][1]}`;
-            }
+            let d2 = stepped2 ? this.buildSteppedPath(points2) : this.buildSmoothPath(points2);
             const areaData2 = `${d2} L ${points2[points2.length - 1][0]},${drawH} L ${points2[0][0]},${drawH} Z`;
             let pathArea2 = this.mainGroup.querySelector(".pathArea2");
             if (!pathArea2) {
@@ -277,7 +404,12 @@ class Visual {
                 this.mainGroup.insertBefore(pathArea2, this.pathLine);
             }
             pathArea2.setAttribute("d", areaData2);
-            pathArea2.setAttribute("fill", "url(#axonautGradient2)");
+            if (showGradient2) {
+                pathArea2.setAttribute("fill", "url(#axonautGradient2)");
+            }
+            else {
+                pathArea2.setAttribute("fill", "none");
+            }
             pathArea2.setAttribute("stroke", "none");
             // Ligne courbe 2
             let pathLine2 = this.mainGroup.querySelector(".pathLine2");
@@ -289,10 +421,150 @@ class Visual {
             pathLine2.setAttribute("d", d2);
             pathLine2.setAttribute("fill", "none");
             pathLine2.setAttribute("stroke", lineColor2);
-            pathLine2.setAttribute("stroke-width", "3");
+            pathLine2.setAttribute("stroke-width", strokeWidth2.toString());
             pathLine2.setAttribute("stroke-linecap", "round");
             pathLine2.setAttribute("stroke-linejoin", "round");
+            // Style ligne 2
+            if (lineStyle2 === "dashed") {
+                pathLine2.setAttribute("stroke-dasharray", "8,4");
+            }
+            else if (lineStyle2 === "dotted") {
+                pathLine2.setAttribute("stroke-dasharray", "2,2");
+            }
+            else {
+                pathLine2.removeAttribute("stroke-dasharray");
+            }
+            // Marqueurs courbe 2
+            this.svg.querySelectorAll(".marker2").forEach(m => m.remove());
+            if (showMarkers2) {
+                points2.forEach(p => {
+                    const circle = document.createElementNS(ns, "circle");
+                    circle.classList.add("marker2");
+                    circle.setAttribute("cx", (this.margin.left + p[0]).toString());
+                    circle.setAttribute("cy", (this.margin.top + p[1]).toString());
+                    circle.setAttribute("r", markerSize2.toString());
+                    circle.setAttribute("fill", lineColor2);
+                    this.svg.appendChild(circle);
+                });
+            }
+            // Étiquettes de données courbe 2
+            this.svg.querySelectorAll(".dataLabel2").forEach(l => l.remove());
+            if (showDataLabels && vals2) {
+                points2.forEach((p, i) => {
+                    const text = document.createElementNS(ns, "text");
+                    text.classList.add("dataLabel2");
+                    text.setAttribute("x", (this.margin.left + p[0]).toString());
+                    text.setAttribute("y", (this.margin.top + p[1] - 10).toString());
+                    text.setAttribute("text-anchor", "middle");
+                    text.setAttribute("fill", dataLabelsColor);
+                    text.setAttribute("font-size", dataLabelsFontSize.toString());
+                    text.setAttribute("font-family", dataLabelsFontFamily);
+                    text.textContent = this.formatDataLabel(Number(vals2[i]), displayUnits, precision);
+                    this.svg.appendChild(text);
+                });
+            }
         }
+        // 6. LÉGENDE
+        this.svg.querySelectorAll(".legend").forEach(l => l.remove());
+        if (showLegend) {
+            const legendGroup = document.createElementNS(ns, "g");
+            legendGroup.classList.add("legend");
+            const items = [];
+            if (vals1)
+                items.push({ name: series1Name, color: lineColor });
+            if (vals2 && vals2.length)
+                items.push({ name: series2Name, color: lineColor2 });
+            let legendX = 0;
+            let legendY = 0;
+            const itemWidth = 100;
+            const itemHeight = 20;
+            if (legendPosition === "Top" || legendPosition === "TopCenter") {
+                legendX = (width - items.length * itemWidth) / 2;
+                legendY = 10;
+            }
+            else if (legendPosition === "Bottom" || legendPosition === "BottomCenter") {
+                legendX = (width - items.length * itemWidth) / 2;
+                legendY = height - 20;
+            }
+            else if (legendPosition === "Left") {
+                legendX = 10;
+                legendY = height / 2 - (items.length * itemHeight) / 2;
+            }
+            else if (legendPosition === "Right") {
+                legendX = width - 110;
+                legendY = height / 2 - (items.length * itemHeight) / 2;
+            }
+            items.forEach((item, i) => {
+                const xOffset = legendPosition.includes("Center") || legendPosition === "Top" || legendPosition === "Bottom"
+                    ? legendX + i * itemWidth
+                    : legendX;
+                const yOffset = legendPosition === "Left" || legendPosition === "Right"
+                    ? legendY + i * itemHeight
+                    : legendY;
+                // Rectangle coloré
+                const rect = document.createElementNS(ns, "rect");
+                rect.setAttribute("x", xOffset.toString());
+                rect.setAttribute("y", yOffset.toString());
+                rect.setAttribute("width", "15");
+                rect.setAttribute("height", "3");
+                rect.setAttribute("fill", item.color);
+                legendGroup.appendChild(rect);
+                // Texte
+                const text = document.createElementNS(ns, "text");
+                text.setAttribute("x", (xOffset + 20).toString());
+                text.setAttribute("y", (yOffset + 2).toString());
+                text.setAttribute("alignment-baseline", "middle");
+                text.setAttribute("fill", legendFontColor);
+                text.setAttribute("font-size", legendFontSize.toString());
+                text.setAttribute("font-family", legendFontFamily);
+                text.textContent = item.name;
+                legendGroup.appendChild(text);
+            });
+            this.svg.appendChild(legendGroup);
+        }
+    }
+    formatDataLabel(value, displayUnits, precision) {
+        let formatted = value;
+        let suffix = "";
+        if (displayUnits === 0) {
+            // Auto
+            if (value >= 1000000000) {
+                formatted = value / 1000000000;
+                suffix = "Md";
+            }
+            else if (value >= 1000000) {
+                formatted = value / 1000000;
+                suffix = "M";
+            }
+            else if (value >= 1000) {
+                formatted = value / 1000;
+                suffix = "K";
+            }
+        }
+        else if (displayUnits > 1) {
+            formatted = value / displayUnits;
+            if (displayUnits === 1000)
+                suffix = "K";
+            else if (displayUnits === 1000000)
+                suffix = "M";
+            else if (displayUnits === 1000000000)
+                suffix = "Md";
+        }
+        return formatted.toFixed(precision) + suffix;
+    }
+    buildSmoothPath(points) {
+        let d = `M ${points[0][0]},${points[0][1]}`;
+        for (let i = 1; i < points.length; i++) {
+            d += ` L ${points[i][0]},${points[i][1]}`;
+        }
+        return d;
+    }
+    buildSteppedPath(points) {
+        let d = `M ${points[0][0]},${points[0][1]}`;
+        for (let i = 1; i < points.length; i++) {
+            d += ` L ${points[i][0]},${points[i - 1][1]} L ${points[i][0]},${points[i][1]}`;
+        }
+        return d;
     }
     getFormattingModel() {
         return this.formattingSettingsService.buildFormattingModel(this.formattingSettings);
@@ -401,14 +673,56 @@ class LineSettingsCard extends FormattingSettingsCard {
         displayName: "Couleur de la ligne",
         value: { value: "#3B60C4" }
     });
+    strokeWidth = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.NumUpDown */ .z.iB({
+        name: "strokeWidth",
+        displayName: "Épaisseur",
+        value: 3
+    });
+    showMarkers = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "showMarkers",
+        displayName: "Afficher les marqueurs",
+        value: false
+    });
+    markerSize = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.NumUpDown */ .z.iB({
+        name: "markerSize",
+        displayName: "Taille des marqueurs",
+        value: 5
+    });
+    lineStyle = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ItemDropdown */ .z.PA({
+        name: "lineStyle",
+        displayName: "Style de ligne",
+        items: [
+            { value: "solid", displayName: "Continu" },
+            { value: "dashed", displayName: "Pointillés" },
+            { value: "dotted", displayName: "Points" }
+        ],
+        value: { value: "solid", displayName: "Continu" }
+    });
+    stepped = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "stepped",
+        displayName: "Ligne en escalier",
+        value: false
+    });
     name = "lineSettings";
     displayName = "Ligne 1";
-    slices = [this.lineColor];
+    slices = [
+        this.lineColor,
+        this.strokeWidth,
+        this.lineStyle,
+        this.showMarkers,
+        this.markerSize,
+        this.stepped
+    ];
 }
 /**
  * Gradient Settings Card
  */
 class GradientSettingsCard extends FormattingSettingsCard {
+    showGradient = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "showGradient",
+        displayName: "Afficher le dégradé",
+        value: true
+    });
     gradientColor = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ColorPicker */ .z.sk({
         name: "gradientColor",
         displayName: "Couleur du dégradé",
@@ -434,7 +748,12 @@ class GradientSettingsCard extends FormattingSettingsCard {
     });
     name = "gradientSettings";
     displayName = "Dégradé 1";
-    slices = [this.gradientColor, this.gradientIntensity, this.gradientDirection];
+    slices = [
+        this.showGradient,
+        this.gradientColor,
+        this.gradientIntensity,
+        this.gradientDirection
+    ];
 }
 /**
  * Second Line Settings Card
@@ -445,14 +764,56 @@ class SecondLineSettingsCard extends FormattingSettingsCard {
         displayName: "Couleur de la ligne",
         value: { value: "#E94F37" }
     });
+    strokeWidth2 = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.NumUpDown */ .z.iB({
+        name: "strokeWidth2",
+        displayName: "Épaisseur",
+        value: 3
+    });
+    showMarkers2 = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "showMarkers2",
+        displayName: "Afficher les marqueurs",
+        value: false
+    });
+    markerSize2 = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.NumUpDown */ .z.iB({
+        name: "markerSize2",
+        displayName: "Taille des marqueurs",
+        value: 5
+    });
+    lineStyle2 = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ItemDropdown */ .z.PA({
+        name: "lineStyle2",
+        displayName: "Style de ligne",
+        items: [
+            { value: "solid", displayName: "Continu" },
+            { value: "dashed", displayName: "Pointillés" },
+            { value: "dotted", displayName: "Points" }
+        ],
+        value: { value: "solid", displayName: "Continu" }
+    });
+    stepped2 = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "stepped2",
+        displayName: "Ligne en escalier",
+        value: false
+    });
     name = "secondLineSettings";
     displayName = "Ligne 2";
-    slices = [this.lineColor2];
+    slices = [
+        this.lineColor2,
+        this.strokeWidth2,
+        this.lineStyle2,
+        this.showMarkers2,
+        this.markerSize2,
+        this.stepped2
+    ];
 }
 /**
  * Second Gradient Settings Card
  */
 class SecondGradientSettingsCard extends FormattingSettingsCard {
+    showGradient2 = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "showGradient2",
+        displayName: "Afficher le dégradé",
+        value: true
+    });
     gradientColor2 = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ColorPicker */ .z.sk({
         name: "gradientColor2",
         displayName: "Couleur du dégradé",
@@ -478,20 +839,276 @@ class SecondGradientSettingsCard extends FormattingSettingsCard {
     });
     name = "secondGradientSettings";
     displayName = "Dégradé 2";
-    slices = [this.gradientColor2, this.gradientIntensity2, this.gradientDirection2];
+    slices = [
+        this.showGradient2,
+        this.gradientColor2,
+        this.gradientIntensity2,
+        this.gradientDirection2
+    ];
 }
 /**
- * Axis Settings Card
+ * X Axis Settings Card
  */
-class AxisSettingsCard extends FormattingSettingsCard {
+class XAxisSettingsCard extends FormattingSettingsCard {
+    show = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "show",
+        displayName: "Afficher l'axe X",
+        value: true
+    });
+    axisColor = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ColorPicker */ .z.sk({
+        name: "axisColor",
+        displayName: "Couleur",
+        value: { value: "#666666" }
+    });
+    fontSize = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.NumUpDown */ .z.iB({
+        name: "fontSize",
+        displayName: "Taille du texte",
+        value: 11
+    });
+    fontFamily = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ItemDropdown */ .z.PA({
+        name: "fontFamily",
+        displayName: "Famille de police",
+        items: [
+            { value: "Segoe UI", displayName: "Segoe UI" },
+            { value: "Arial", displayName: "Arial" },
+            { value: "Courier New", displayName: "Courier New" },
+            { value: "Georgia", displayName: "Georgia" },
+            { value: "Verdana", displayName: "Verdana" }
+        ],
+        value: { value: "Segoe UI", displayName: "Segoe UI" }
+    });
+    title = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "title",
+        displayName: "Afficher le titre",
+        value: false
+    });
+    titleText = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.TextInput */ .z.ks({
+        name: "titleText",
+        displayName: "Texte du titre",
+        value: "",
+        placeholder: "Titre de l'axe X"
+    });
+    name = "xAxisSettings";
+    displayName = "Axe X";
+    slices = [
+        this.show,
+        this.axisColor,
+        this.fontSize,
+        this.fontFamily,
+        this.title,
+        this.titleText
+    ];
+}
+/**
+ * Y Axis Settings Card
+ */
+class YAxisSettingsCard extends FormattingSettingsCard {
+    show = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "show",
+        displayName: "Afficher l'axe Y",
+        value: true
+    });
+    axisColor = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ColorPicker */ .z.sk({
+        name: "axisColor",
+        displayName: "Couleur",
+        value: { value: "#666666" }
+    });
+    fontSize = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.NumUpDown */ .z.iB({
+        name: "fontSize",
+        displayName: "Taille du texte",
+        value: 11
+    });
+    fontFamily = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ItemDropdown */ .z.PA({
+        name: "fontFamily",
+        displayName: "Famille de police",
+        items: [
+            { value: "Segoe UI", displayName: "Segoe UI" },
+            { value: "Arial", displayName: "Arial" },
+            { value: "Courier New", displayName: "Courier New" },
+            { value: "Georgia", displayName: "Georgia" },
+            { value: "Verdana", displayName: "Verdana" }
+        ],
+        value: { value: "Segoe UI", displayName: "Segoe UI" }
+    });
+    title = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "title",
+        displayName: "Afficher le titre",
+        value: false
+    });
+    titleText = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.TextInput */ .z.ks({
+        name: "titleText",
+        displayName: "Texte du titre",
+        value: "",
+        placeholder: "Titre de l'axe Y"
+    });
     useYAxisBis = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
         name: "useYAxisBis",
         displayName: "Afficher axe Y bis",
         value: false
     });
-    name = "axisSettings";
-    displayName = "Axes";
-    slices = [this.useYAxisBis];
+    name = "yAxisSettings";
+    displayName = "Axe Y";
+    slices = [
+        this.show,
+        this.axisColor,
+        this.fontSize,
+        this.fontFamily,
+        this.title,
+        this.titleText,
+        this.useYAxisBis
+    ];
+}
+/**
+ * Grid Settings Card
+ */
+class GridSettingsCard extends FormattingSettingsCard {
+    showHorizontal = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "showHorizontal",
+        displayName: "Grille horizontale",
+        value: true
+    });
+    showVertical = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "showVertical",
+        displayName: "Grille verticale",
+        value: false
+    });
+    gridColor = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ColorPicker */ .z.sk({
+        name: "gridColor",
+        displayName: "Couleur de la grille",
+        value: { value: "#f0f0f0" }
+    });
+    gridThickness = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.NumUpDown */ .z.iB({
+        name: "gridThickness",
+        displayName: "Épaisseur",
+        value: 1
+    });
+    gridStyle = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ItemDropdown */ .z.PA({
+        name: "gridStyle",
+        displayName: "Style",
+        items: [
+            { value: "solid", displayName: "Continu" },
+            { value: "dashed", displayName: "Pointillés" }
+        ],
+        value: { value: "dashed", displayName: "Pointillés" }
+    });
+    name = "gridSettings";
+    displayName = "Grille";
+    slices = [
+        this.showHorizontal,
+        this.showVertical,
+        this.gridColor,
+        this.gridThickness,
+        this.gridStyle
+    ];
+}
+/**
+ * Data Labels Settings Card
+ */
+class DataLabelsCard extends FormattingSettingsCard {
+    show = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "show",
+        displayName: "Afficher les étiquettes",
+        value: false
+    });
+    color = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ColorPicker */ .z.sk({
+        name: "color",
+        displayName: "Couleur",
+        value: { value: "#000000" }
+    });
+    fontSize = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.NumUpDown */ .z.iB({
+        name: "fontSize",
+        displayName: "Taille du texte",
+        value: 9
+    });
+    fontFamily = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ItemDropdown */ .z.PA({
+        name: "fontFamily",
+        displayName: "Famille de police",
+        items: [
+            { value: "Segoe UI", displayName: "Segoe UI" },
+            { value: "Arial", displayName: "Arial" },
+            { value: "Courier New", displayName: "Courier New" }
+        ],
+        value: { value: "Segoe UI", displayName: "Segoe UI" }
+    });
+    displayUnits = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ItemDropdown */ .z.PA({
+        name: "displayUnits",
+        displayName: "Unités d'affichage",
+        items: [
+            { value: "0", displayName: "Auto" },
+            { value: "1", displayName: "Aucun" },
+            { value: "1000", displayName: "Milliers (K)" },
+            { value: "1000000", displayName: "Millions (M)" },
+            { value: "1000000000", displayName: "Milliards (Md)" }
+        ],
+        value: { value: "0", displayName: "Auto" }
+    });
+    precision = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.NumUpDown */ .z.iB({
+        name: "precision",
+        displayName: "Décimales",
+        value: 0
+    });
+    name = "dataLabels";
+    displayName = "Étiquettes de données";
+    slices = [
+        this.show,
+        this.color,
+        this.fontSize,
+        this.fontFamily,
+        this.displayUnits,
+        this.precision
+    ];
+}
+/**
+ * Legend Settings Card
+ */
+class LegendCard extends FormattingSettingsCard {
+    show = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ToggleSwitch */ .z.jF({
+        name: "show",
+        displayName: "Afficher la légende",
+        value: true
+    });
+    position = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ItemDropdown */ .z.PA({
+        name: "position",
+        displayName: "Position",
+        items: [
+            { value: "Top", displayName: "Haut" },
+            { value: "Bottom", displayName: "Bas" },
+            { value: "Left", displayName: "Gauche" },
+            { value: "Right", displayName: "Droite" },
+            { value: "TopCenter", displayName: "Haut centre" },
+            { value: "BottomCenter", displayName: "Bas centre" }
+        ],
+        value: { value: "Top", displayName: "Haut" }
+    });
+    fontColor = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ColorPicker */ .z.sk({
+        name: "fontColor",
+        displayName: "Couleur",
+        value: { value: "#666666" }
+    });
+    fontSize = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.NumUpDown */ .z.iB({
+        name: "fontSize",
+        displayName: "Taille du texte",
+        value: 10
+    });
+    fontFamily = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_0__/* .formattingSettings.ItemDropdown */ .z.PA({
+        name: "fontFamily",
+        displayName: "Famille de police",
+        items: [
+            { value: "Segoe UI", displayName: "Segoe UI" },
+            { value: "Arial", displayName: "Arial" },
+            { value: "Courier New", displayName: "Courier New" }
+        ],
+        value: { value: "Segoe UI", displayName: "Segoe UI" }
+    });
+    name = "legend";
+    displayName = "Légende";
+    slices = [
+        this.show,
+        this.position,
+        this.fontColor,
+        this.fontSize,
+        this.fontFamily
+    ];
 }
 /**
  * Visual settings model class
@@ -501,13 +1118,21 @@ class VisualFormattingSettingsModel extends FormattingSettingsModel {
     gradientSettingsCard = new GradientSettingsCard();
     secondLineSettingsCard = new SecondLineSettingsCard();
     secondGradientSettingsCard = new SecondGradientSettingsCard();
-    axisSettingsCard = new AxisSettingsCard();
+    xAxisSettings = new XAxisSettingsCard();
+    yAxisSettings = new YAxisSettingsCard();
+    gridSettings = new GridSettingsCard();
+    dataLabels = new DataLabelsCard();
+    legend = new LegendCard();
     cards = [
         this.lineSettingsCard,
         this.gradientSettingsCard,
         this.secondLineSettingsCard,
         this.secondGradientSettingsCard,
-        this.axisSettingsCard
+        this.xAxisSettings,
+        this.yAxisSettings,
+        this.gridSettings,
+        this.dataLabels,
+        this.legend
     ];
 }
 
@@ -791,9 +1416,10 @@ class FormattingSettingsService {
 /* harmony export */   Tn: () => (/* binding */ SimpleCard),
 /* harmony export */   iB: () => (/* binding */ NumUpDown),
 /* harmony export */   jF: () => (/* binding */ ToggleSwitch),
+/* harmony export */   ks: () => (/* binding */ TextInput),
 /* harmony export */   sk: () => (/* binding */ ColorPicker)
 /* harmony export */ });
-/* unused harmony exports CardGroupEntity, Group, SimpleSlice, AlignmentGroup, Slider, DatePicker, AutoDropdown, DurationPicker, ErrorRangeControl, FieldPicker, ItemFlagsSelection, AutoFlagsSelection, TextInput, TextArea, FontPicker, GradientBar, ImageUpload, ListEditor, ReadOnlyText, ShapeMapSelector, CompositeSlice, FontControl, MarginPadding, Container, ContainerItem */
+/* unused harmony exports CardGroupEntity, Group, SimpleSlice, AlignmentGroup, Slider, DatePicker, AutoDropdown, DurationPicker, ErrorRangeControl, FieldPicker, ItemFlagsSelection, AutoFlagsSelection, TextArea, FontPicker, GradientBar, ImageUpload, ListEditor, ReadOnlyText, ShapeMapSelector, CompositeSlice, FontControl, MarginPadding, Container, ContainerItem */
 /* harmony import */ var _utils_FormattingSettingsUtils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(639);
 /**
  * Powerbi utils components classes for custom visual formatting pane objects
