@@ -7,6 +7,7 @@ export declare class Visual implements IVisual {
     private target;
     private svg;
     private mainGroup;
+    private tooltip;
     private pathArea;
     private pathLine;
     private gradientStopTop;
@@ -17,6 +18,8 @@ export declare class Visual implements IVisual {
     private formattingSettings;
     private formattingSettingsService;
     constructor(options: VisualConstructorOptions);
+    private showTooltip;
+    private hideTooltip;
     private getNiceStep;
     update(options: VisualUpdateOptions): void;
     private formatDataLabel;

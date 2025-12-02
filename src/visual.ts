@@ -14,6 +14,7 @@ export class Visual implements IVisual {
     private target: HTMLElement;
     private svg: SVGSVGElement;
     private mainGroup: SVGGElement;
+    private tooltip: HTMLDivElement;
     
     // Éléments graphiques
     private pathArea: SVGPathElement;
@@ -34,13 +35,31 @@ export class Visual implements IVisual {
         this.target = options.element;
         this.formattingSettingsService = new FormattingSettingsService();
 
+        // Style du conteneur
+        this.target.style.position = "relative";
+
         // 1. Création du SVG
         const ns = "http://www.w3.org/2000/svg";
         this.svg = document.createElementNS(ns, "svg");
         this.svg.classList.add("chart-container");
         this.target.appendChild(this.svg);
 
-        // 2. Définition du Dégradé
+        // 2. Création du tooltip HTML
+        this.tooltip = document.createElement("div");
+        this.tooltip.className = "custom-tooltip";
+        this.tooltip.style.position = "absolute";
+        this.tooltip.style.display = "none";
+        this.tooltip.style.background = "rgba(0, 0, 0, 0.8)";
+        this.tooltip.style.color = "white";
+        this.tooltip.style.padding = "8px 12px";
+        this.tooltip.style.borderRadius = "4px";
+        this.tooltip.style.fontSize = "12px";
+        this.tooltip.style.pointerEvents = "none";
+        this.tooltip.style.zIndex = "1000";
+        this.tooltip.style.whiteSpace = "nowrap";
+        this.target.appendChild(this.tooltip);
+
+        // 3. Définition du Dégradé
         const defs = document.createElementNS(ns, "defs");
         this.gradient = document.createElementNS(ns, "linearGradient");
         this.gradient.setAttribute("id", "axonautGradient");
@@ -65,7 +84,7 @@ export class Visual implements IVisual {
         defs.appendChild(this.gradient);
         this.svg.appendChild(defs);
 
-        // 3. Groupes
+        // 4. Groupes
         this.mainGroup = document.createElementNS(ns, "g");
         this.axisGroup = document.createElementNS(ns, "g");
         
@@ -87,6 +106,17 @@ export class Visual implements IVisual {
         this.mainGroup.appendChild(this.pathLine);
 
         this.svg.appendChild(this.mainGroup);
+    }
+
+    private showTooltip(x: number, y: number, content: string) {
+        this.tooltip.innerHTML = content;
+        this.tooltip.style.display = "block";
+        this.tooltip.style.left = (x + 10) + "px";
+        this.tooltip.style.top = (y - 10) + "px";
+    }
+
+    private hideTooltip() {
+        this.tooltip.style.display = "none";
     }
 
     private getNiceStep(maxValue: number): number {
@@ -380,7 +410,7 @@ export class Visual implements IVisual {
         // Marqueurs courbe 1
         this.svg.querySelectorAll(".marker1").forEach(m => m.remove());
         if (showMarkers && points1.length > 0) {
-            points1.forEach(p => {
+            points1.forEach((p, i) => {
                 const circle = document.createElementNS(ns, "circle");
                 circle.classList.add("marker1");
                 circle.setAttribute("cx", (this.margin.left + p[0]).toString());
@@ -390,6 +420,48 @@ export class Visual implements IVisual {
                 this.svg.appendChild(circle);
             });
         }
+
+        // Ajouter des zones invisibles pour le survol même sans marqueurs
+        this.svg.querySelectorAll(".hoverArea1").forEach(h => h.remove());
+        points1.forEach((p, i) => {
+            const hoverCircle = document.createElementNS(ns, "circle");
+            hoverCircle.classList.add("hoverArea1");
+            hoverCircle.setAttribute("cx", (this.margin.left + p[0]).toString());
+            hoverCircle.setAttribute("cy", (this.margin.top + p[1]).toString());
+            hoverCircle.setAttribute("r", "10");
+            hoverCircle.setAttribute("fill", "transparent");
+            hoverCircle.setAttribute("cursor", "pointer");
+            
+            // Tooltip HTML
+            hoverCircle.addEventListener("mouseenter", (e: MouseEvent) => {
+                const tooltipContent = `<div><strong>${this.formatDate(cats[i].toString())}</strong></div><div>${series1Name}: ${this.formatNumber(Number(vals1[i]))}</div>`;
+                this.showTooltip(e.pageX, e.pageY, tooltipContent);
+                
+                if (!showMarkers) {
+                    const tempCircle = document.createElementNS(ns, "circle");
+                    tempCircle.classList.add("tempMarker1");
+                    tempCircle.setAttribute("cx", (this.margin.left + p[0]).toString());
+                    tempCircle.setAttribute("cy", (this.margin.top + p[1]).toString());
+                    tempCircle.setAttribute("r", "5");
+                    tempCircle.setAttribute("fill", lineColor);
+                    tempCircle.setAttribute("stroke", "#fff");
+                    tempCircle.setAttribute("stroke-width", "2");
+                    this.svg.appendChild(tempCircle);
+                }
+            });
+            
+            hoverCircle.addEventListener("mousemove", (e: MouseEvent) => {
+                this.tooltip.style.left = (e.pageX + 10) + "px";
+                this.tooltip.style.top = (e.pageY - 10) + "px";
+            });
+            
+            hoverCircle.addEventListener("mouseleave", () => {
+                this.hideTooltip();
+                this.svg.querySelectorAll(".tempMarker1").forEach(m => m.remove());
+            });
+            
+            this.svg.appendChild(hoverCircle);
+        });
 
         // Étiquettes de données courbe 1
         this.svg.querySelectorAll(".dataLabel1").forEach(l => l.remove());
@@ -482,7 +554,7 @@ export class Visual implements IVisual {
             // Marqueurs courbe 2
             this.svg.querySelectorAll(".marker2").forEach(m => m.remove());
             if (showMarkers2) {
-                points2.forEach(p => {
+                points2.forEach((p, i) => {
                     const circle = document.createElementNS(ns, "circle");
                     circle.classList.add("marker2");
                     circle.setAttribute("cx", (this.margin.left + p[0]).toString());
@@ -492,6 +564,48 @@ export class Visual implements IVisual {
                     this.svg.appendChild(circle);
                 });
             }
+
+            // Ajouter des zones invisibles pour le survol même sans marqueurs
+            this.svg.querySelectorAll(".hoverArea2").forEach(h => h.remove());
+            points2.forEach((p, i) => {
+                const hoverCircle = document.createElementNS(ns, "circle");
+                hoverCircle.classList.add("hoverArea2");
+                hoverCircle.setAttribute("cx", (this.margin.left + p[0]).toString());
+                hoverCircle.setAttribute("cy", (this.margin.top + p[1]).toString());
+                hoverCircle.setAttribute("r", "10");
+                hoverCircle.setAttribute("fill", "transparent");
+                hoverCircle.setAttribute("cursor", "pointer");
+                
+                // Tooltip HTML
+                hoverCircle.addEventListener("mouseenter", (e: MouseEvent) => {
+                    const tooltipContent = `<div><strong>${this.formatDate(cats[i].toString())}</strong></div><div>${series2Name}: ${this.formatNumber(Number(vals2[i]))}</div>`;
+                    this.showTooltip(e.pageX, e.pageY, tooltipContent);
+                    
+                    if (!showMarkers2) {
+                        const tempCircle = document.createElementNS(ns, "circle");
+                        tempCircle.classList.add("tempMarker2");
+                        tempCircle.setAttribute("cx", (this.margin.left + p[0]).toString());
+                        tempCircle.setAttribute("cy", (this.margin.top + p[1]).toString());
+                        tempCircle.setAttribute("r", "5");
+                        tempCircle.setAttribute("fill", lineColor2);
+                        tempCircle.setAttribute("stroke", "#fff");
+                        tempCircle.setAttribute("stroke-width", "2");
+                        this.svg.appendChild(tempCircle);
+                    }
+                });
+                
+                hoverCircle.addEventListener("mousemove", (e: MouseEvent) => {
+                    this.tooltip.style.left = (e.pageX + 10) + "px";
+                    this.tooltip.style.top = (e.pageY - 10) + "px";
+                });
+                
+                hoverCircle.addEventListener("mouseleave", () => {
+                    this.hideTooltip();
+                    this.svg.querySelectorAll(".tempMarker2").forEach(m => m.remove());
+                });
+                
+                this.svg.appendChild(hoverCircle);
+            });
 
             // Étiquettes de données courbe 2
             this.svg.querySelectorAll(".dataLabel2").forEach(l => l.remove());
