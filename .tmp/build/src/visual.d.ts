@@ -12,9 +12,14 @@ export declare class Visual implements IVisual {
     private gradientStopTop;
     private gradientStopBottom;
     private axisGroup;
+    private gradient;
     private margin;
+    private formattingSettings;
+    private formattingSettingsService;
     constructor(options: VisualConstructorOptions);
     update(options: VisualUpdateOptions): void;
+    getFormattingModel(): powerbi.visuals.FormattingModel;
+    private applyGradientDirection;
     private formatNumber;
     private formatDate;
 }

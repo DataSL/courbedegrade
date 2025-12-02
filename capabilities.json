@@ -1,14 +1,39 @@
 {
   "dataRoles": [
     {
-      "displayName": "Date",
+      "displayName": "Axe X",
       "name": "category",
       "kind": "Grouping"
     },
     {
-      "displayName": "Valeur",
+      "displayName": "Valeurs",
       "name": "measure",
       "kind": "Measure"
+    }
+  ],
+  "dataViewMappings": [
+    {
+      "categorical": {
+        "categories": {
+          "for": {
+            "in": "category"
+          },
+          "dataReductionAlgorithm": {
+            "top": {
+              "count": 1000
+            }
+          }
+        },
+        "values": {
+          "select": [
+            {
+              "bind": {
+                "to": "measure"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "objects": {
@@ -20,15 +45,42 @@
           "type": { "fill": { "solid": { "color": true } } }
         }
       }
-    }
-  },
-  "dataViewMappings": [
-    {
-      "categorical": {
-        "categories": { "for": { "in": "category" } },
-        "values": { "select": [ { "bind": { "to": "measure" } } ] }
+    },
+    "lineSettings": {
+      "displayName": "Ligne",
+      "properties": {
+        "lineColor": {
+          "displayName": "Couleur de la ligne",
+          "type": { "fill": { "solid": { "color": true } } }
+        }
+      }
+    },
+    "gradientSettings": {
+      "displayName": "Dégradé",
+      "properties": {
+        "gradientColor": {
+          "displayName": "Couleur du dégradé",
+          "type": { "fill": { "solid": { "color": true } } }
+        },
+        "gradientIntensity": {
+          "displayName": "Intensité (0-1)",
+          "type": { "numeric": true }
+        },
+        "gradientDirection": {
+          "displayName": "Direction",
+          "type": {
+            "enumeration": [
+              { "value": "vertical", "displayName": "Haut → Bas" },
+              { "value": "vertical-reverse", "displayName": "Bas → Haut" },
+              { "value": "horizontal", "displayName": "Gauche → Droite" },
+              { "value": "horizontal-reverse", "displayName": "Droite → Gauche" },
+              { "value": "diagonal", "displayName": "Diagonale ↘" },
+              { "value": "diagonal-reverse", "displayName": "Diagonale ↙" }
+            ]
+          }
+        }
       }
     }
-  ],
+  },
   "privileges": []
 }

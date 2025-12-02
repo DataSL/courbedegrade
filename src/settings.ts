@@ -33,51 +33,62 @@ import FormattingSettingsSlice = formattingSettings.Slice;
 import FormattingSettingsModel = formattingSettings.Model;
 
 /**
- * Data Point Formatting Card
+ * Line Settings Card
  */
-class DataPointCardSettings extends FormattingSettingsCard {
-    defaultColor = new formattingSettings.ColorPicker({
-        name: "defaultColor",
-        displayName: "Default color",
-        value: { value: "" }
+class LineSettingsCard extends FormattingSettingsCard {
+    lineColor = new formattingSettings.ColorPicker({
+        name: "lineColor",
+        displayName: "Couleur de la ligne",
+        value: { value: "#3B60C4" }
     });
 
-    showAllDataPoints = new formattingSettings.ToggleSwitch({
-        name: "showAllDataPoints",
-        displayName: "Show all",
-        value: true
-    });
-
-    fill = new formattingSettings.ColorPicker({
-        name: "fill",
-        displayName: "Fill",
-        value: { value: "" }
-    });
-
-    fillRule = new formattingSettings.ColorPicker({
-        name: "fillRule",
-        displayName: "Color saturation",
-        value: { value: "" }
-    });
-
-    fontSize = new formattingSettings.NumUpDown({
-        name: "fontSize",
-        displayName: "Text Size",
-        value: 12
-    });
-
-    name: string = "dataPoint";
-    displayName: string = "Data colors";
-    slices: Array<FormattingSettingsSlice> = [this.defaultColor, this.showAllDataPoints, this.fill, this.fillRule, this.fontSize];
+    name: string = "lineSettings";
+    displayName: string = "Ligne";
+    slices: Array<FormattingSettingsSlice> = [this.lineColor];
 }
 
 /**
-* visual settings model class
-*
-*/
+ * Gradient Settings Card
+ */
+class GradientSettingsCard extends FormattingSettingsCard {
+    gradientColor = new formattingSettings.ColorPicker({
+        name: "gradientColor",
+        displayName: "Couleur du dégradé",
+        value: { value: "#3B60C4" }
+    });
+
+    gradientIntensity = new formattingSettings.NumUpDown({
+        name: "gradientIntensity",
+        displayName: "Intensité (0-1)",
+        value: 0.3
+    });
+
+    gradientDirection = new formattingSettings.ItemDropdown({
+        name: "gradientDirection",
+        displayName: "Direction",
+        items: [
+            { value: "vertical", displayName: "Haut → Bas" },
+            { value: "vertical-reverse", displayName: "Bas → Haut" },
+            { value: "horizontal", displayName: "Gauche → Droite" },
+            { value: "horizontal-reverse", displayName: "Droite → Gauche" },
+            { value: "diagonal", displayName: "Diagonale ↘" },
+            { value: "diagonal-reverse", displayName: "Diagonale ↙" }
+        ],
+        value: { value: "vertical", displayName: "Haut → Bas" }
+    });
+
+    name: string = "gradientSettings";
+    displayName: string = "Dégradé";
+    slices: Array<FormattingSettingsSlice> = [this.gradientColor, this.gradientIntensity, this.gradientDirection];
+}
+
+/**
+ * Visual settings model class
+ */
 export class VisualFormattingSettingsModel extends FormattingSettingsModel {
     // Create formatting settings model formatting cards
-    dataPointCard = new DataPointCardSettings();
+    lineSettingsCard = new LineSettingsCard();
+    gradientSettingsCard = new GradientSettingsCard();
 
-    cards = [this.dataPointCard];
+    cards = [this.lineSettingsCard, this.gradientSettingsCard];
 }
