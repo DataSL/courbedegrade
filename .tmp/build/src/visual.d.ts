@@ -17,6 +17,7 @@ export declare class Visual implements IVisual {
     private formattingSettings;
     private formattingSettingsService;
     constructor(options: VisualConstructorOptions);
+    private getNiceStep;
     update(options: VisualUpdateOptions): void;
     getFormattingModel(): powerbi.visuals.FormattingModel;
     private applyGradientDirection;

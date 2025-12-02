@@ -89,6 +89,22 @@ export class Visual implements IVisual {
         this.svg.appendChild(this.mainGroup);
     }
 
+    // Ajoutez cette fonction dans votre classe Visual
+    private getNiceStep(maxValue: number): number {
+        // Liste des pas "humains"
+        const steps = [1, 2, 2.5, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
+        const minTicks = 4;
+        const maxTicks = 8;
+        for (let i = 0; i < steps.length; i++) {
+            const ticks = Math.ceil(maxValue / steps[i]);
+            if (ticks >= minTicks && ticks <= maxTicks) {
+                return steps[i];
+            }
+        }
+        // Si rien trouvé, retourne le plus grand pas
+        return steps[steps.length - 1];
+    }
+
     public update(options: VisualUpdateOptions) {
         // A. Récupération des données
         const dataView = options.dataViews[0];
@@ -129,12 +145,16 @@ export class Visual implements IVisual {
         const drawW = width - this.margin.left - this.margin.right;
         const drawH = height - this.margin.top - this.margin.bottom;
 
-        // D. CALCUL DE L'ÉCHELLE Y (PALIERS DE 5000)
+        // D. CALCUL DE L'ÉCHELLE Y (step intelligent)
         let maxDataVal = 0;
         vals.forEach(v => { if(Number(v) > maxDataVal) maxDataVal = Number(v); });
-        
-        const stepSize = 5000;
+
+        const stepSize = this.getNiceStep(maxDataVal);
         let niceMax = Math.ceil(maxDataVal / stepSize) * stepSize;
+        // Si le nombre de ticks est trop grand, réduit niceMax
+        if ((niceMax / stepSize) > 8) {
+            niceMax = stepSize * 8;
+        }
         if (niceMax === 0) niceMax = stepSize; 
 
         // E. Calcul des points (X, Y) en pixels
