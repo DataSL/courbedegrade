@@ -13,10 +13,18 @@ export declare class Visual implements IVisual {
     private margin;
     private formattingSettings;
     private formattingSettingsService;
+    private host;
+    private dataView;
+    private drillUpButton;
+    private drillDownButton;
+    private isDrillDownMode;
     constructor(options: VisualConstructorOptions);
+    private createDrillButtons;
     private showTooltip;
     private hideTooltip;
     private getNiceStep;
+    private toggleDrillMode;
+    private drillUp;
     update(options: VisualUpdateOptions): void;
     private formatDataLabel;
     private buildSmoothPath;
@@ -25,4 +33,5 @@ export declare class Visual implements IVisual {
     private applyGradientDirection;
     private formatNumber;
     private formatDate;
+    private handleDrillDown;
 }
