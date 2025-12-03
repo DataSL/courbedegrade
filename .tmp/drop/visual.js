@@ -29,13 +29,12 @@ class Visual {
     formattingSettingsService;
     // Drill down support
     host;
+    selectionManager;
     dataView;
-    drillUpButton;
-    drillDownButton;
-    isDrillDownMode = false;
     constructor(options) {
         this.target = options.element;
         this.host = options.host;
+        this.selectionManager = this.host.createSelectionManager();
         this.formattingSettingsService = new powerbi_visuals_utils_formattingmodel__WEBPACK_IMPORTED_MODULE_1__/* .FormattingSettingsService */ .O();
         this.target.style.position = "relative";
         // 1. Création du SVG
@@ -63,38 +62,19 @@ class Visual {
         // 4. Groupes
         this.mainGroup = document.createElementNS(ns, "g");
         this.axisGroup = document.createElementNS(ns, "g");
-        this.linesGroup = document.createElementNS(ns, "g"); // Groupe dédié aux lignes
+        this.linesGroup = document.createElementNS(ns, "g");
         this.mainGroup.appendChild(this.axisGroup);
         this.mainGroup.appendChild(this.linesGroup);
         this.svg.appendChild(this.mainGroup);
-        // Créer les boutons de drill
-        this.createDrillButtons();
-    }
-    createDrillButtons() {
-        const buttonContainer = document.createElement("div");
-        buttonContainer.style.position = "absolute";
-        buttonContainer.style.top = "5px";
-        buttonContainer.style.right = "5px";
-        buttonContainer.style.zIndex = "1000";
-        buttonContainer.style.display = "flex";
-        buttonContainer.style.gap = "5px";
-        // Bouton Drill Down
-        this.drillDownButton = document.createElement("button");
-        this.drillDownButton.innerHTML = "⬇";
-        this.drillDownButton.title = "Drill Down";
-        this.drillDownButton.style.cssText = "padding: 5px 10px; cursor: pointer; background: #fff; border: 1px solid #ccc; border-radius: 3px;";
-        this.drillDownButton.style.display = "none";
-        this.drillDownButton.addEventListener("click", () => this.toggleDrillMode());
-        // Bouton Drill Up
-        this.drillUpButton = document.createElement("button");
-        this.drillUpButton.innerHTML = "⬆";
-        this.drillUpButton.title = "Drill Up";
-        this.drillUpButton.style.cssText = "padding: 5px 10px; cursor: pointer; background: #fff; border: 1px solid #ccc; border-radius: 3px;";
-        this.drillUpButton.style.display = "none";
-        this.drillUpButton.addEventListener("click", () => this.drillUp());
-        buttonContainer.appendChild(this.drillDownButton);
-        buttonContainer.appendChild(this.drillUpButton);
-        this.target.appendChild(buttonContainer);
+        // Permettre le context menu (clic droit)
+        this.svg.addEventListener('contextmenu', (event) => {
+            const mouseEvent = event;
+            this.selectionManager.showContextMenu({}, {
+                x: mouseEvent.clientX,
+                y: mouseEvent.clientY
+            });
+            event.preventDefault();
+        });
     }
     showTooltip(x, y, content) {
         this.tooltip.innerHTML = content;
@@ -121,17 +101,6 @@ class Visual {
         const powerOf10 = Math.pow(10, Math.floor(Math.log10(maxValue)));
         return powerOf10;
     }
-    toggleDrillMode() {
-        // Activer/désactiver le mode drill down
-        this.isDrillDownMode = !this.isDrillDownMode;
-        this.svg.style.cursor = this.isDrillDownMode ? "crosshair" : "default";
-        this.drillDownButton.style.background = this.isDrillDownMode ? "#e0e0e0" : "#fff";
-    }
-    drillUp() {
-        // Effectuer le drill up en utilisant l'API correcte
-        const selectionManager = this.host.createSelectionManager();
-        selectionManager.clear();
-    }
     update(options) {
         const ns = "http://www.w3.org/2000/svg";
         // A. Récupération des données
@@ -141,9 +110,7 @@ class Visual {
         if (!dataView.categorical.categories || !dataView.categorical.values)
             return;
         this.dataView = dataView;
-        // Vérifier si on peut drill down (une seule fois au début)
         const category = dataView.categorical.categories[0];
-        const hasDrillCapability = category && category.source && category.source.roles && category.source.roles['category'];
         this.formattingSettings = this.formattingSettingsService.populateFormattingSettingsModel(_settings__WEBPACK_IMPORTED_MODULE_0__/* .VisualFormattingSettingsModel */ .S, options.dataViews[0]);
         this.svg.setAttribute("width", options.viewport.width.toString());
         this.svg.setAttribute("height", options.viewport.height.toString());
@@ -238,7 +205,7 @@ class Visual {
                 this.axisGroup.appendChild(text);
             }
         }
-        // 2. AXE X avec support du drill down
+        // 2. AXE X
         if (showXAxis) {
             const step = Math.ceil(cats.length / 10);
             cats.forEach((cat, i) => {
@@ -270,16 +237,6 @@ class Visual {
                 text.setAttribute("fill", xAxisColor);
                 text.setAttribute("font-size", xAxisFontSize.toString());
                 text.setAttribute("font-family", xAxisFontFamily);
-                // Ajouter le support du drill down sur clic
-                if (hasDrillCapability) {
-                    text.style.cursor = "pointer";
-                    text.addEventListener("click", (e) => {
-                        if (this.isDrillDownMode) {
-                            this.handleDrillDown(i);
-                        }
-                        e.stopPropagation();
-                    });
-                }
                 this.axisGroup.appendChild(text);
             });
         }
@@ -287,10 +244,9 @@ class Visual {
         const legendItems = [];
         allSeries.forEach((series, index) => {
             if (index >= 10)
-                return; // Limite de sécurité
+                return;
             const seriesName = series.source.displayName;
             const vals = series.values;
-            // Récupération dynamique des settings (lineSettings1, lineSettings2, etc.)
             const lineSettings = this.formattingSettings[`lineSettings${index + 1}`];
             const gradientSettings = this.formattingSettings[`gradientSettings${index + 1}`];
             if (!lineSettings || !gradientSettings)
@@ -364,8 +320,12 @@ class Visual {
                     this.svg.appendChild(circle);
                 });
             }
-            // Zones de survol (Tooltip) avec drill down
+            // Zones de survol (Tooltip) avec support du drill
             points.forEach((p, i) => {
+                // Créer l'ID de sélection pour ce point
+                const selectionId = this.host.createSelectionIdBuilder()
+                    .withCategory(category, i)
+                    .createSelectionId();
                 const hoverCircle = document.createElementNS(ns, "circle");
                 hoverCircle.classList.add("custom-hover");
                 hoverCircle.setAttribute("cx", (this.margin.left + p[0]).toString());
@@ -394,15 +354,21 @@ class Visual {
                     this.hideTooltip();
                     this.svg.querySelectorAll(".temp-marker").forEach(m => m.remove());
                 });
-                // Support du drill down sur clic en mode drill
-                if (hasDrillCapability) {
-                    hoverCircle.addEventListener("click", (e) => {
-                        if (this.isDrillDownMode) {
-                            this.handleDrillDown(i);
-                            e.stopPropagation();
-                        }
+                // Gestion du clic pour la sélection (nécessaire pour le drill)
+                hoverCircle.addEventListener("click", (event) => {
+                    // Sélectionner ce point de données
+                    this.selectionManager.select(selectionId, event.ctrlKey || event.metaKey);
+                    event.stopPropagation();
+                });
+                // Context menu (clic droit) pour afficher les options de drill
+                hoverCircle.addEventListener("contextmenu", (event) => {
+                    this.selectionManager.showContextMenu(selectionId, {
+                        x: event.clientX,
+                        y: event.clientY
                     });
-                }
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
                 this.svg.appendChild(hoverCircle);
             });
         });
@@ -456,12 +422,10 @@ class Visual {
             });
             this.svg.appendChild(legendGroup);
         }
-        // Afficher/masquer les boutons de drill
-        if (this.drillDownButton && this.drillUpButton) {
-            this.drillDownButton.style.display = hasDrillCapability ? "block" : "none";
-            // Le bouton drill up est affiché quand on a navigué en profondeur
-            this.drillUpButton.style.display = hasDrillCapability ? "block" : "none";
-        }
+        // Clic sur le fond pour désélectionner
+        this.svg.addEventListener('click', () => {
+            this.selectionManager.clear();
+        });
     }
     formatDataLabel(value, displayUnits, precision) {
         let formatted = value;
@@ -564,26 +528,6 @@ class Visual {
         }
         catch (e) {
             return value;
-        }
-    }
-    handleDrillDown(categoryIndex) {
-        if (!this.dataView || !this.dataView.categorical || !this.dataView.categorical.categories) {
-            return;
-        }
-        const category = this.dataView.categorical.categories[0];
-        if (category.identity && category.identity[categoryIndex]) {
-            const selectionId = this.host.createSelectionIdBuilder()
-                .withCategory(category, categoryIndex)
-                .createSelectionId();
-            // Créer un SelectionManager pour gérer la sélection
-            const selectionManager = this.host.createSelectionManager();
-            // Effectuer la sélection (cela déclenche le drill down dans Power BI)
-            selectionManager.select(selectionId, false).then(() => {
-                // Désactiver le mode drill après l'action
-                this.isDrillDownMode = false;
-                this.svg.style.cursor = "default";
-                this.drillDownButton.style.background = "#fff";
-            });
         }
     }
 }

@@ -5,6 +5,7 @@ import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructor
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import ISelectionId = powerbi.visuals.ISelectionId;
+import ISelectionManager = powerbi.extensibility.ISelectionManager;
 
 import { VisualFormattingSettingsModel } from "./settings";
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
@@ -28,14 +29,13 @@ export class Visual implements IVisual {
     
     // Drill down support
     private host: powerbi.extensibility.visual.IVisualHost;
+    private selectionManager: ISelectionManager;
     private dataView: powerbi.DataView;
-    private drillUpButton: HTMLButtonElement;
-    private drillDownButton: HTMLButtonElement;
-    private isDrillDownMode: boolean = false;
 
     constructor(options: VisualConstructorOptions) {
         this.target = options.element;
         this.host = options.host;
+        this.selectionManager = this.host.createSelectionManager();
         this.formattingSettingsService = new FormattingSettingsService();
 
         this.target.style.position = "relative";
@@ -68,44 +68,21 @@ export class Visual implements IVisual {
         // 4. Groupes
         this.mainGroup = document.createElementNS(ns, "g");
         this.axisGroup = document.createElementNS(ns, "g");
-        this.linesGroup = document.createElementNS(ns, "g"); // Groupe dédié aux lignes
+        this.linesGroup = document.createElementNS(ns, "g");
         
         this.mainGroup.appendChild(this.axisGroup);
         this.mainGroup.appendChild(this.linesGroup);
         this.svg.appendChild(this.mainGroup);
 
-        // Créer les boutons de drill
-        this.createDrillButtons();
-    }
-
-    private createDrillButtons(): void {
-        const buttonContainer = document.createElement("div");
-        buttonContainer.style.position = "absolute";
-        buttonContainer.style.top = "5px";
-        buttonContainer.style.right = "5px";
-        buttonContainer.style.zIndex = "1000";
-        buttonContainer.style.display = "flex";
-        buttonContainer.style.gap = "5px";
-
-        // Bouton Drill Down
-        this.drillDownButton = document.createElement("button");
-        this.drillDownButton.innerHTML = "⬇";
-        this.drillDownButton.title = "Drill Down";
-        this.drillDownButton.style.cssText = "padding: 5px 10px; cursor: pointer; background: #fff; border: 1px solid #ccc; border-radius: 3px;";
-        this.drillDownButton.style.display = "none";
-        this.drillDownButton.addEventListener("click", () => this.toggleDrillMode());
-
-        // Bouton Drill Up
-        this.drillUpButton = document.createElement("button");
-        this.drillUpButton.innerHTML = "⬆";
-        this.drillUpButton.title = "Drill Up";
-        this.drillUpButton.style.cssText = "padding: 5px 10px; cursor: pointer; background: #fff; border: 1px solid #ccc; border-radius: 3px;";
-        this.drillUpButton.style.display = "none";
-        this.drillUpButton.addEventListener("click", () => this.drillUp());
-
-        buttonContainer.appendChild(this.drillDownButton);
-        buttonContainer.appendChild(this.drillUpButton);
-        this.target.appendChild(buttonContainer);
+        // Permettre le context menu (clic droit)
+        this.svg.addEventListener('contextmenu', (event) => {
+            const mouseEvent = event as MouseEvent;
+            this.selectionManager.showContextMenu({}, {
+                x: mouseEvent.clientX,
+                y: mouseEvent.clientY
+            });
+            event.preventDefault();
+        });
     }
 
     private showTooltip(x: number, y: number, content: string) {
@@ -135,19 +112,6 @@ export class Visual implements IVisual {
         return powerOf10;
     }
 
-    private toggleDrillMode(): void {
-        // Activer/désactiver le mode drill down
-        this.isDrillDownMode = !this.isDrillDownMode;
-        this.svg.style.cursor = this.isDrillDownMode ? "crosshair" : "default";
-        this.drillDownButton.style.background = this.isDrillDownMode ? "#e0e0e0" : "#fff";
-    }
-
-    private drillUp(): void {
-        // Effectuer le drill up en utilisant l'API correcte
-        const selectionManager = this.host.createSelectionManager();
-        selectionManager.clear();
-    }
-
     public update(options: VisualUpdateOptions) {
         const ns = "http://www.w3.org/2000/svg";
         
@@ -157,10 +121,7 @@ export class Visual implements IVisual {
         if (!dataView.categorical.categories || !dataView.categorical.values) return;
 
         this.dataView = dataView;
-        
-        // Vérifier si on peut drill down (une seule fois au début)
         const category = dataView.categorical.categories[0];
-        const hasDrillCapability = category && category.source && category.source.roles && category.source.roles['category'];
 
         this.formattingSettings = this.formattingSettingsService.populateFormattingSettingsModel(VisualFormattingSettingsModel, options.dataViews[0]);
         
@@ -267,7 +228,7 @@ export class Visual implements IVisual {
             }
         }
 
-        // 2. AXE X avec support du drill down
+        // 2. AXE X
         if (showXAxis) {
             const step = Math.ceil(cats.length / 10); 
             cats.forEach((cat, i) => {
@@ -300,17 +261,6 @@ export class Visual implements IVisual {
                 text.setAttribute("font-size", xAxisFontSize.toString());
                 text.setAttribute("font-family", xAxisFontFamily);
                 
-                // Ajouter le support du drill down sur clic
-                if (hasDrillCapability) {
-                    text.style.cursor = "pointer";
-                    text.addEventListener("click", (e: MouseEvent) => {
-                        if (this.isDrillDownMode) {
-                            this.handleDrillDown(i);
-                        }
-                        e.stopPropagation();
-                    });
-                }
-                
                 this.axisGroup.appendChild(text);
             });
         }
@@ -319,12 +269,11 @@ export class Visual implements IVisual {
         const legendItems: Array<{name: string, color: string}> = [];
 
         allSeries.forEach((series, index) => {
-            if (index >= 10) return; // Limite de sécurité
+            if (index >= 10) return;
 
             const seriesName = series.source.displayName;
             const vals = series.values;
             
-            // Récupération dynamique des settings (lineSettings1, lineSettings2, etc.)
             const lineSettings = this.formattingSettings[`lineSettings${index + 1}`];
             const gradientSettings = this.formattingSettings[`gradientSettings${index + 1}`];
 
@@ -409,8 +358,13 @@ export class Visual implements IVisual {
                 });
             }
 
-            // Zones de survol (Tooltip) avec drill down
+            // Zones de survol (Tooltip) avec support du drill
             points.forEach((p, i) => {
+                // Créer l'ID de sélection pour ce point
+                const selectionId = this.host.createSelectionIdBuilder()
+                    .withCategory(category, i)
+                    .createSelectionId();
+
                 const hoverCircle = document.createElementNS(ns, "circle");
                 hoverCircle.classList.add("custom-hover");
                 hoverCircle.setAttribute("cx", (this.margin.left + p[0]).toString());
@@ -443,16 +397,23 @@ export class Visual implements IVisual {
                     this.hideTooltip();
                     this.svg.querySelectorAll(".temp-marker").forEach(m => m.remove());
                 });
-                
-                // Support du drill down sur clic en mode drill
-                if (hasDrillCapability) {
-                    hoverCircle.addEventListener("click", (e: MouseEvent) => {
-                        if (this.isDrillDownMode) {
-                            this.handleDrillDown(i);
-                            e.stopPropagation();
-                        }
+
+                // Gestion du clic pour la sélection (nécessaire pour le drill)
+                hoverCircle.addEventListener("click", (event: MouseEvent) => {
+                    // Sélectionner ce point de données
+                    this.selectionManager.select(selectionId, event.ctrlKey || event.metaKey);
+                    event.stopPropagation();
+                });
+
+                // Context menu (clic droit) pour afficher les options de drill
+                hoverCircle.addEventListener("contextmenu", (event: MouseEvent) => {
+                    this.selectionManager.showContextMenu(selectionId, {
+                        x: event.clientX,
+                        y: event.clientY
                     });
-                }
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
                 
                 this.svg.appendChild(hoverCircle);
             });
@@ -512,12 +473,10 @@ export class Visual implements IVisual {
             this.svg.appendChild(legendGroup);
         }
 
-        // Afficher/masquer les boutons de drill
-        if (this.drillDownButton && this.drillUpButton) {
-            this.drillDownButton.style.display = hasDrillCapability ? "block" : "none";
-            // Le bouton drill up est affiché quand on a navigué en profondeur
-            this.drillUpButton.style.display = hasDrillCapability ? "block" : "none";
-        }
+        // Clic sur le fond pour désélectionner
+        this.svg.addEventListener('click', () => {
+            this.selectionManager.clear();
+        });
     }
 
     private formatDataLabel(value: number, displayUnits: number, precision: number): string {
@@ -581,31 +540,6 @@ export class Visual implements IVisual {
             return new Intl.DateTimeFormat('fr-FR', { month: 'short', year: 'numeric' }).format(date);
         } catch (e) {
             return value;
-        }
-    }
-
-    private handleDrillDown(categoryIndex: number): void {
-        if (!this.dataView || !this.dataView.categorical || !this.dataView.categorical.categories) {
-            return;
-        }
-
-        const category = this.dataView.categorical.categories[0];
-        
-        if (category.identity && category.identity[categoryIndex]) {
-            const selectionId = this.host.createSelectionIdBuilder()
-                .withCategory(category, categoryIndex)
-                .createSelectionId();
-
-            // Créer un SelectionManager pour gérer la sélection
-            const selectionManager = this.host.createSelectionManager();
-            
-            // Effectuer la sélection (cela déclenche le drill down dans Power BI)
-            selectionManager.select(selectionId, false).then(() => {
-                // Désactiver le mode drill après l'action
-                this.isDrillDownMode = false;
-                this.svg.style.cursor = "default";
-                this.drillDownButton.style.background = "#fff";
-            });
         }
     }
 }

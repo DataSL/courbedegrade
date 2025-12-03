@@ -1,13 +1,13 @@
 {
   "dataRoles": [
     {
-      "displayName": "Axe X",
+      "displayName": "Category",
       "name": "category",
       "kind": "Grouping"
     },
     {
-      "displayName": "Valeurs",
-      "name": "measures",
+      "displayName": "Values",
+      "name": "measure",
       "kind": "Measure"
     }
   ],
@@ -16,13 +16,36 @@
   },
   "dataViewMappings": [
     {
+      "conditions": [
+        {
+          "category": {
+            "max": 1
+          },
+          "measure": {
+            "min": 1,
+            "max": 10
+          }
+        }
+      ],
       "categorical": {
         "categories": {
-          "for": { "in": "category" },
-          "dataReductionAlgorithm": { "top": {} }
+          "for": {
+            "in": "category"
+          },
+          "dataReductionAlgorithm": {
+            "top": {
+              "count": 30000
+            }
+          }
         },
         "values": {
-          "for": { "in": "measures" }
+          "select": [
+            {
+              "bind": {
+                "to": "measure"
+              }
+            }
+          ]
         }
       }
     }
