@@ -3,7 +3,7 @@ import FormattingSettingsCard = formattingSettings.SimpleCard;
 import FormattingSettingsSlice = formattingSettings.Slice;
 import FormattingSettingsModel = formattingSettings.Model;
 /**
- * Line Settings Card
+ * Generic Line Settings Card
  */
 declare class LineSettingsCard extends FormattingSettingsCard {
     lineColor: formattingSettings.ColorPicker;
@@ -12,47 +12,19 @@ declare class LineSettingsCard extends FormattingSettingsCard {
     markerSize: formattingSettings.NumUpDown;
     lineStyle: formattingSettings.ItemDropdown;
     stepped: formattingSettings.ToggleSwitch;
-    name: string;
-    displayName: string;
     slices: Array<FormattingSettingsSlice>;
+    constructor(name: string, displayName: string, defaultColor: string);
 }
 /**
- * Gradient Settings Card
+ * Generic Gradient Settings Card
  */
 declare class GradientSettingsCard extends FormattingSettingsCard {
     showGradient: formattingSettings.ToggleSwitch;
     gradientColor: formattingSettings.ColorPicker;
     gradientIntensity: formattingSettings.NumUpDown;
     gradientDirection: formattingSettings.ItemDropdown;
-    name: string;
-    displayName: string;
     slices: Array<FormattingSettingsSlice>;
-}
-/**
- * Second Line Settings Card
- */
-declare class SecondLineSettingsCard extends FormattingSettingsCard {
-    lineColor2: formattingSettings.ColorPicker;
-    strokeWidth2: formattingSettings.NumUpDown;
-    showMarkers2: formattingSettings.ToggleSwitch;
-    markerSize2: formattingSettings.NumUpDown;
-    lineStyle2: formattingSettings.ItemDropdown;
-    stepped2: formattingSettings.ToggleSwitch;
-    name: string;
-    displayName: string;
-    slices: Array<FormattingSettingsSlice>;
-}
-/**
- * Second Gradient Settings Card
- */
-declare class SecondGradientSettingsCard extends FormattingSettingsCard {
-    showGradient2: formattingSettings.ToggleSwitch;
-    gradientColor2: formattingSettings.ColorPicker;
-    gradientIntensity2: formattingSettings.NumUpDown;
-    gradientDirection2: formattingSettings.ItemDropdown;
-    name: string;
-    displayName: string;
-    slices: Array<FormattingSettingsSlice>;
+    constructor(name: string, displayName: string, defaultColor: string);
 }
 /**
  * X Axis Settings Card
@@ -127,15 +99,32 @@ declare class LegendCard extends FormattingSettingsCard {
  * Visual settings model class
  */
 export declare class VisualFormattingSettingsModel extends FormattingSettingsModel {
-    lineSettingsCard: LineSettingsCard;
-    gradientSettingsCard: GradientSettingsCard;
-    secondLineSettingsCard: SecondLineSettingsCard;
-    secondGradientSettingsCard: SecondGradientSettingsCard;
+    private defaultColors;
+    lineSettings1: LineSettingsCard;
+    gradientSettings1: GradientSettingsCard;
+    lineSettings2: LineSettingsCard;
+    gradientSettings2: GradientSettingsCard;
+    lineSettings3: LineSettingsCard;
+    gradientSettings3: GradientSettingsCard;
+    lineSettings4: LineSettingsCard;
+    gradientSettings4: GradientSettingsCard;
+    lineSettings5: LineSettingsCard;
+    gradientSettings5: GradientSettingsCard;
+    lineSettings6: LineSettingsCard;
+    gradientSettings6: GradientSettingsCard;
+    lineSettings7: LineSettingsCard;
+    gradientSettings7: GradientSettingsCard;
+    lineSettings8: LineSettingsCard;
+    gradientSettings8: GradientSettingsCard;
+    lineSettings9: LineSettingsCard;
+    gradientSettings9: GradientSettingsCard;
+    lineSettings10: LineSettingsCard;
+    gradientSettings10: GradientSettingsCard;
     xAxisSettings: XAxisSettingsCard;
     yAxisSettings: YAxisSettingsCard;
     gridSettings: GridSettingsCard;
     dataLabels: DataLabelsCard;
     legend: LegendCard;
-    cards: (LineSettingsCard | GradientSettingsCard | SecondLineSettingsCard | SecondGradientSettingsCard | XAxisSettingsCard | YAxisSettingsCard | GridSettingsCard | DataLabelsCard | LegendCard)[];
+    cards: (LineSettingsCard | GradientSettingsCard | XAxisSettingsCard | YAxisSettingsCard | GridSettingsCard | DataLabelsCard | LegendCard)[];
 }
 export {};

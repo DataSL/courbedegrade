@@ -7,13 +7,9 @@ export declare class Visual implements IVisual {
     private target;
     private svg;
     private mainGroup;
-    private tooltip;
-    private pathArea;
-    private pathLine;
-    private gradientStopTop;
-    private gradientStopBottom;
     private axisGroup;
-    private gradient;
+    private linesGroup;
+    private tooltip;
     private margin;
     private formattingSettings;
     private formattingSettingsService;

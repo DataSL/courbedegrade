@@ -33,7 +33,7 @@ import FormattingSettingsSlice = formattingSettings.Slice;
 import FormattingSettingsModel = formattingSettings.Model;
 
 /**
- * Line Settings Card
+ * Generic Line Settings Card
  */
 class LineSettingsCard extends FormattingSettingsCard {
     lineColor = new formattingSettings.ColorPicker({
@@ -77,8 +77,6 @@ class LineSettingsCard extends FormattingSettingsCard {
         value: false
     });
 
-    name: string = "lineSettings";
-    displayName: string = "Ligne 1";
     slices: Array<FormattingSettingsSlice> = [
         this.lineColor, 
         this.strokeWidth, 
@@ -87,10 +85,17 @@ class LineSettingsCard extends FormattingSettingsCard {
         this.markerSize,
         this.stepped
     ];
+
+    constructor(name: string, displayName: string, defaultColor: string) {
+        super();
+        this.name = name;
+        this.displayName = displayName;
+        this.lineColor.value.value = defaultColor;
+    }
 }
 
 /**
- * Gradient Settings Card
+ * Generic Gradient Settings Card
  */
 class GradientSettingsCard extends FormattingSettingsCard {
     showGradient = new formattingSettings.ToggleSwitch({
@@ -125,117 +130,19 @@ class GradientSettingsCard extends FormattingSettingsCard {
         value: { value: "vertical", displayName: "Haut → Bas" }
     });
 
-    name: string = "gradientSettings";
-    displayName: string = "Dégradé 1";
     slices: Array<FormattingSettingsSlice> = [
         this.showGradient,
         this.gradientColor, 
         this.gradientIntensity, 
         this.gradientDirection
     ];
-}
 
-/**
- * Second Line Settings Card
- */
-class SecondLineSettingsCard extends FormattingSettingsCard {
-    lineColor2 = new formattingSettings.ColorPicker({
-        name: "lineColor2",
-        displayName: "Couleur de la ligne",
-        value: { value: "#E94F37" }
-    });
-
-    strokeWidth2 = new formattingSettings.NumUpDown({
-        name: "strokeWidth2",
-        displayName: "Épaisseur",
-        value: 3
-    });
-
-    showMarkers2 = new formattingSettings.ToggleSwitch({
-        name: "showMarkers2",
-        displayName: "Afficher les marqueurs",
-        value: false
-    });
-
-    markerSize2 = new formattingSettings.NumUpDown({
-        name: "markerSize2",
-        displayName: "Taille des marqueurs",
-        value: 5
-    });
-
-    lineStyle2 = new formattingSettings.ItemDropdown({
-        name: "lineStyle2",
-        displayName: "Style de ligne",
-        items: [
-            { value: "solid", displayName: "Continu" },
-            { value: "dashed", displayName: "Pointillés" },
-            { value: "dotted", displayName: "Points" }
-        ],
-        value: { value: "solid", displayName: "Continu" }
-    });
-
-    stepped2 = new formattingSettings.ToggleSwitch({
-        name: "stepped2",
-        displayName: "Ligne en escalier",
-        value: false
-    });
-
-    name: string = "secondLineSettings";
-    displayName: string = "Ligne 2";
-    slices: Array<FormattingSettingsSlice> = [
-        this.lineColor2, 
-        this.strokeWidth2, 
-        this.lineStyle2,
-        this.showMarkers2, 
-        this.markerSize2,
-        this.stepped2
-    ];
-}
-
-/**
- * Second Gradient Settings Card
- */
-class SecondGradientSettingsCard extends FormattingSettingsCard {
-    showGradient2 = new formattingSettings.ToggleSwitch({
-        name: "showGradient2",
-        displayName: "Afficher le dégradé",
-        value: true
-    });
-
-    gradientColor2 = new formattingSettings.ColorPicker({
-        name: "gradientColor2",
-        displayName: "Couleur du dégradé",
-        value: { value: "#E94F37" }
-    });
-
-    gradientIntensity2 = new formattingSettings.NumUpDown({
-        name: "gradientIntensity2",
-        displayName: "Intensité (0-1)",
-        value: 0.3
-    });
-
-    gradientDirection2 = new formattingSettings.ItemDropdown({
-        name: "gradientDirection2",
-        displayName: "Direction",
-        items: [
-            { value: "vertical", displayName: "Haut → Bas" },
-            { value: "vertical-reverse", displayName: "Bas → Haut" },
-            { value: "horizontal", displayName: "Gauche → Droite" },
-            { value: "horizontal-reverse", displayName: "Droite → Gauche" },
-            { value: "diagonal", displayName: "Diagonale ↘" },
-            { value: "diagonal-reverse", displayName: "Diagonale ↙" }
-        ],
-        value: { value: "vertical", displayName: "Haut → Bas" }
-    });
-
-    name: string = "secondGradientSettings";
-    displayName: string = "Dégradé 2";
-    slices: Array<FormattingSettingsSlice> = [
-        this.showGradient2,
-        this.gradientColor2, 
-        this.gradientIntensity2, 
-        this.gradientDirection2
-    ];
+    constructor(name: string, displayName: string, defaultColor: string) {
+        super();
+        this.name = name;
+        this.displayName = displayName;
+        this.gradientColor.value.value = defaultColor;
+    }
 }
 
 /**
@@ -540,10 +447,39 @@ class LegendCard extends FormattingSettingsCard {
  * Visual settings model class
  */
 export class VisualFormattingSettingsModel extends FormattingSettingsModel {
-    lineSettingsCard = new LineSettingsCard();
-    gradientSettingsCard = new GradientSettingsCard();
-    secondLineSettingsCard = new SecondLineSettingsCard();
-    secondGradientSettingsCard = new SecondGradientSettingsCard();
+    // Palette par défaut
+    private defaultColors = ["#3B60C4", "#E94F37", "#44BBA4", "#F7B538", "#DB5461", "#3F88C5", "#7D4E57", "#D66853", "#212D40", "#11151C"];
+
+    lineSettings1 = new LineSettingsCard("lineSettings1", "Ligne 1", this.defaultColors[0]);
+    gradientSettings1 = new GradientSettingsCard("gradientSettings1", "Dégradé 1", this.defaultColors[0]);
+
+    lineSettings2 = new LineSettingsCard("lineSettings2", "Ligne 2", this.defaultColors[1]);
+    gradientSettings2 = new GradientSettingsCard("gradientSettings2", "Dégradé 2", this.defaultColors[1]);
+
+    lineSettings3 = new LineSettingsCard("lineSettings3", "Ligne 3", this.defaultColors[2]);
+    gradientSettings3 = new GradientSettingsCard("gradientSettings3", "Dégradé 3", this.defaultColors[2]);
+
+    lineSettings4 = new LineSettingsCard("lineSettings4", "Ligne 4", this.defaultColors[3]);
+    gradientSettings4 = new GradientSettingsCard("gradientSettings4", "Dégradé 4", this.defaultColors[3]);
+
+    lineSettings5 = new LineSettingsCard("lineSettings5", "Ligne 5", this.defaultColors[4]);
+    gradientSettings5 = new GradientSettingsCard("gradientSettings5", "Dégradé 5", this.defaultColors[4]);
+
+    lineSettings6 = new LineSettingsCard("lineSettings6", "Ligne 6", this.defaultColors[5]);
+    gradientSettings6 = new GradientSettingsCard("gradientSettings6", "Dégradé 6", this.defaultColors[5]);
+
+    lineSettings7 = new LineSettingsCard("lineSettings7", "Ligne 7", this.defaultColors[6]);
+    gradientSettings7 = new GradientSettingsCard("gradientSettings7", "Dégradé 7", this.defaultColors[6]);
+
+    lineSettings8 = new LineSettingsCard("lineSettings8", "Ligne 8", this.defaultColors[7]);
+    gradientSettings8 = new GradientSettingsCard("gradientSettings8", "Dégradé 8", this.defaultColors[7]);
+
+    lineSettings9 = new LineSettingsCard("lineSettings9", "Ligne 9", this.defaultColors[8]);
+    gradientSettings9 = new GradientSettingsCard("gradientSettings9", "Dégradé 9", this.defaultColors[8]);
+
+    lineSettings10 = new LineSettingsCard("lineSettings10", "Ligne 10", this.defaultColors[9]);
+    gradientSettings10 = new GradientSettingsCard("gradientSettings10", "Dégradé 10", this.defaultColors[9]);
+
     xAxisSettings = new XAxisSettingsCard();
     yAxisSettings = new YAxisSettingsCard();
     gridSettings = new GridSettingsCard();
@@ -551,10 +487,16 @@ export class VisualFormattingSettingsModel extends FormattingSettingsModel {
     legend = new LegendCard();
 
     cards = [
-        this.lineSettingsCard, 
-        this.gradientSettingsCard, 
-        this.secondLineSettingsCard, 
-        this.secondGradientSettingsCard,
+        this.lineSettings1, this.gradientSettings1,
+        this.lineSettings2, this.gradientSettings2,
+        this.lineSettings3, this.gradientSettings3,
+        this.lineSettings4, this.gradientSettings4,
+        this.lineSettings5, this.gradientSettings5,
+        this.lineSettings6, this.gradientSettings6,
+        this.lineSettings7, this.gradientSettings7,
+        this.lineSettings8, this.gradientSettings8,
+        this.lineSettings9, this.gradientSettings9,
+        this.lineSettings10, this.gradientSettings10,
         this.xAxisSettings,
         this.yAxisSettings,
         this.gridSettings,

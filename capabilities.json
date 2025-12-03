@@ -6,13 +6,8 @@
       "kind": "Grouping"
     },
     {
-      "displayName": "Valeur 1",
-      "name": "measure1",
-      "kind": "Measure"
-    },
-    {
-      "displayName": "Valeur 2",
-      "name": "measure2",
+      "displayName": "Valeurs",
+      "name": "measures",
       "kind": "Measure"
     }
   ],
@@ -20,352 +15,96 @@
     {
       "categorical": {
         "categories": {
-          "for": {
-            "in": "category"
-          },
-          "dataReductionAlgorithm": {
-            "top": {
-              "count": 1000
-            }
-          }
+          "for": { "in": "category" }
         },
         "values": {
-          "select": [
-            {
-              "bind": {
-                "to": "measure1"
-              }
-            },
-            {
-              "bind": {
-                "to": "measure2"
-              }
-            }
-          ]
+          "for": { "in": "measures" }
         }
       }
     }
   ],
   "objects": {
-    "lineSettings": {
-      "displayName": "Ligne 1",
-      "properties": {
-        "lineColor": {
-          "displayName": "Couleur de la ligne",
-          "type": { "fill": { "solid": { "color": true } } }
-        },
-        "strokeWidth": {
-          "displayName": "Épaisseur",
-          "type": { "numeric": true }
-        },
-        "showMarkers": {
-          "displayName": "Afficher les marqueurs",
-          "type": { "bool": true }
-        },
-        "markerSize": {
-          "displayName": "Taille des marqueurs",
-          "type": { "numeric": true }
-        },
-        "lineStyle": {
-          "displayName": "Style de ligne",
-          "type": {
-            "enumeration": [
-              { "value": "solid", "displayName": "Continu" },
-              { "value": "dashed", "displayName": "Pointillés" },
-              { "value": "dotted", "displayName": "Points" }
-            ]
-          }
-        },
-        "stepped": {
-          "displayName": "Ligne en escalier",
-          "type": { "bool": true }
-        }
-      }
-    },
-    "gradientSettings": {
-      "displayName": "Dégradé 1",
-      "properties": {
-        "showGradient": {
-          "displayName": "Afficher le dégradé",
-          "type": { "bool": true }
-        },
-        "gradientColor": {
-          "displayName": "Couleur du dégradé",
-          "type": { "fill": { "solid": { "color": true } } }
-        },
-        "gradientIntensity": {
-          "displayName": "Intensité (0-1)",
-          "type": { "numeric": true }
-        },
-        "gradientDirection": {
-          "displayName": "Direction",
-          "type": {
-            "enumeration": [
-              { "value": "vertical", "displayName": "Haut → Bas" },
-              { "value": "vertical-reverse", "displayName": "Bas → Haut" },
-              { "value": "horizontal", "displayName": "Gauche → Droite" },
-              { "value": "horizontal-reverse", "displayName": "Droite → Gauche" },
-              { "value": "diagonal", "displayName": "Diagonale ↘" },
-              { "value": "diagonal-reverse", "displayName": "Diagonale ↙" }
-            ]
-          }
-        }
-      }
-    },
-    "secondLineSettings": {
-      "displayName": "Ligne 2",
-      "properties": {
-        "lineColor2": {
-          "displayName": "Couleur de la ligne",
-          "type": { "fill": { "solid": { "color": true } } }
-        },
-        "strokeWidth2": {
-          "displayName": "Épaisseur",
-          "type": { "numeric": true }
-        },
-        "showMarkers2": {
-          "displayName": "Afficher les marqueurs",
-          "type": { "bool": true }
-        },
-        "markerSize2": {
-          "displayName": "Taille des marqueurs",
-          "type": { "numeric": true }
-        },
-        "lineStyle2": {
-          "displayName": "Style de ligne",
-          "type": {
-            "enumeration": [
-              { "value": "solid", "displayName": "Continu" },
-              { "value": "dashed", "displayName": "Pointillés" },
-              { "value": "dotted", "displayName": "Points" }
-            ]
-          }
-        },
-        "stepped2": {
-          "displayName": "Ligne en escalier",
-          "type": { "bool": true }
-        }
-      }
-    },
-    "secondGradientSettings": {
-      "displayName": "Dégradé 2",
-      "properties": {
-        "showGradient2": {
-          "displayName": "Afficher le dégradé",
-          "type": { "bool": true }
-        },
-        "gradientColor2": {
-          "displayName": "Couleur du dégradé",
-          "type": { "fill": { "solid": { "color": true } } }
-        },
-        "gradientIntensity2": {
-          "displayName": "Intensité (0-1)",
-          "type": { "numeric": true }
-        },
-        "gradientDirection2": {
-          "displayName": "Direction",
-          "type": {
-            "enumeration": [
-              { "value": "vertical", "displayName": "Haut → Bas" },
-              { "value": "vertical-reverse", "displayName": "Bas → Haut" },
-              { "value": "horizontal", "displayName": "Gauche → Droite" },
-              { "value": "horizontal-reverse", "displayName": "Droite → Gauche" },
-              { "value": "diagonal", "displayName": "Diagonale ↘" },
-              { "value": "diagonal-reverse", "displayName": "Diagonale ↙" }
-            ]
-          }
-        }
-      }
-    },
+    "lineSettings1": { "displayName": "Ligne 1", "properties": { "lineColor": { "type": { "fill": { "solid": { "color": true } } } }, "strokeWidth": { "type": { "numeric": true } }, "lineStyle": { "type": { "enumeration": [ { "value": "solid", "displayName": "Continu" }, { "value": "dashed", "displayName": "Pointillés" }, { "value": "dotted", "displayName": "Points" } ] } }, "showMarkers": { "type": { "bool": true } }, "markerSize": { "type": { "numeric": true } }, "stepped": { "type": { "bool": true } } } },
+    "gradientSettings1": { "displayName": "Dégradé 1", "properties": { "showGradient": { "type": { "bool": true } }, "gradientColor": { "type": { "fill": { "solid": { "color": true } } } }, "gradientIntensity": { "type": { "numeric": true } }, "gradientDirection": { "type": { "enumeration": [ { "value": "vertical", "displayName": "Haut → Bas" }, { "value": "vertical-reverse", "displayName": "Bas → Haut" }, { "value": "horizontal", "displayName": "Gauche → Droite" }, { "value": "horizontal-reverse", "displayName": "Droite → Gauche" }, { "value": "diagonal", "displayName": "Diagonale ↘" }, { "value": "diagonal-reverse", "displayName": "Diagonale ↙" } ] } } } },
+    
+    "lineSettings2": { "displayName": "Ligne 2", "properties": { "lineColor": { "type": { "fill": { "solid": { "color": true } } } }, "strokeWidth": { "type": { "numeric": true } }, "lineStyle": { "type": { "enumeration": [ { "value": "solid", "displayName": "Continu" }, { "value": "dashed", "displayName": "Pointillés" }, { "value": "dotted", "displayName": "Points" } ] } }, "showMarkers": { "type": { "bool": true } }, "markerSize": { "type": { "numeric": true } }, "stepped": { "type": { "bool": true } } } },
+    "gradientSettings2": { "displayName": "Dégradé 2", "properties": { "showGradient": { "type": { "bool": true } }, "gradientColor": { "type": { "fill": { "solid": { "color": true } } } }, "gradientIntensity": { "type": { "numeric": true } }, "gradientDirection": { "type": { "enumeration": [ { "value": "vertical", "displayName": "Haut → Bas" }, { "value": "vertical-reverse", "displayName": "Bas → Haut" }, { "value": "horizontal", "displayName": "Gauche → Droite" }, { "value": "horizontal-reverse", "displayName": "Droite → Gauche" }, { "value": "diagonal", "displayName": "Diagonale ↘" }, { "value": "diagonal-reverse", "displayName": "Diagonale ↙" } ] } } } },
+
+    "lineSettings3": { "displayName": "Ligne 3", "properties": { "lineColor": { "type": { "fill": { "solid": { "color": true } } } }, "strokeWidth": { "type": { "numeric": true } }, "lineStyle": { "type": { "enumeration": [ { "value": "solid", "displayName": "Continu" }, { "value": "dashed", "displayName": "Pointillés" }, { "value": "dotted", "displayName": "Points" } ] } }, "showMarkers": { "type": { "bool": true } }, "markerSize": { "type": { "numeric": true } }, "stepped": { "type": { "bool": true } } } },
+    "gradientSettings3": { "displayName": "Dégradé 3", "properties": { "showGradient": { "type": { "bool": true } }, "gradientColor": { "type": { "fill": { "solid": { "color": true } } } }, "gradientIntensity": { "type": { "numeric": true } }, "gradientDirection": { "type": { "enumeration": [ { "value": "vertical", "displayName": "Haut → Bas" }, { "value": "vertical-reverse", "displayName": "Bas → Haut" }, { "value": "horizontal", "displayName": "Gauche → Droite" }, { "value": "horizontal-reverse", "displayName": "Droite → Gauche" }, { "value": "diagonal", "displayName": "Diagonale ↘" }, { "value": "diagonal-reverse", "displayName": "Diagonale ↙" } ] } } } },
+
+    "lineSettings4": { "displayName": "Ligne 4", "properties": { "lineColor": { "type": { "fill": { "solid": { "color": true } } } }, "strokeWidth": { "type": { "numeric": true } }, "lineStyle": { "type": { "enumeration": [ { "value": "solid", "displayName": "Continu" }, { "value": "dashed", "displayName": "Pointillés" }, { "value": "dotted", "displayName": "Points" } ] } }, "showMarkers": { "type": { "bool": true } }, "markerSize": { "type": { "numeric": true } }, "stepped": { "type": { "bool": true } } } },
+    "gradientSettings4": { "displayName": "Dégradé 4", "properties": { "showGradient": { "type": { "bool": true } }, "gradientColor": { "type": { "fill": { "solid": { "color": true } } } }, "gradientIntensity": { "type": { "numeric": true } }, "gradientDirection": { "type": { "enumeration": [ { "value": "vertical", "displayName": "Haut → Bas" }, { "value": "vertical-reverse", "displayName": "Bas → Haut" }, { "value": "horizontal", "displayName": "Gauche → Droite" }, { "value": "horizontal-reverse", "displayName": "Droite → Gauche" }, { "value": "diagonal", "displayName": "Diagonale ↘" }, { "value": "diagonal-reverse", "displayName": "Diagonale ↙" } ] } } } },
+
+    "lineSettings5": { "displayName": "Ligne 5", "properties": { "lineColor": { "type": { "fill": { "solid": { "color": true } } } }, "strokeWidth": { "type": { "numeric": true } }, "lineStyle": { "type": { "enumeration": [ { "value": "solid", "displayName": "Continu" }, { "value": "dashed", "displayName": "Pointillés" }, { "value": "dotted", "displayName": "Points" } ] } }, "showMarkers": { "type": { "bool": true } }, "markerSize": { "type": { "numeric": true } }, "stepped": { "type": { "bool": true } } } },
+    "gradientSettings5": { "displayName": "Dégradé 5", "properties": { "showGradient": { "type": { "bool": true } }, "gradientColor": { "type": { "fill": { "solid": { "color": true } } } }, "gradientIntensity": { "type": { "numeric": true } }, "gradientDirection": { "type": { "enumeration": [ { "value": "vertical", "displayName": "Haut → Bas" }, { "value": "vertical-reverse", "displayName": "Bas → Haut" }, { "value": "horizontal", "displayName": "Gauche → Droite" }, { "value": "horizontal-reverse", "displayName": "Droite → Gauche" }, { "value": "diagonal", "displayName": "Diagonale ↘" }, { "value": "diagonal-reverse", "displayName": "Diagonale ↙" } ] } } } },
+
+    "lineSettings6": { "displayName": "Ligne 6", "properties": { "lineColor": { "type": { "fill": { "solid": { "color": true } } } }, "strokeWidth": { "type": { "numeric": true } }, "lineStyle": { "type": { "enumeration": [ { "value": "solid", "displayName": "Continu" }, { "value": "dashed", "displayName": "Pointillés" }, { "value": "dotted", "displayName": "Points" } ] } }, "showMarkers": { "type": { "bool": true } }, "markerSize": { "type": { "numeric": true } }, "stepped": { "type": { "bool": true } } } },
+    "gradientSettings6": { "displayName": "Dégradé 6", "properties": { "showGradient": { "type": { "bool": true } }, "gradientColor": { "type": { "fill": { "solid": { "color": true } } } }, "gradientIntensity": { "type": { "numeric": true } }, "gradientDirection": { "type": { "enumeration": [ { "value": "vertical", "displayName": "Haut → Bas" }, { "value": "vertical-reverse", "displayName": "Bas → Haut" }, { "value": "horizontal", "displayName": "Gauche → Droite" }, { "value": "horizontal-reverse", "displayName": "Droite → Gauche" }, { "value": "diagonal", "displayName": "Diagonale ↘" }, { "value": "diagonal-reverse", "displayName": "Diagonale ↙" } ] } } } },
+
+    "lineSettings7": { "displayName": "Ligne 7", "properties": { "lineColor": { "type": { "fill": { "solid": { "color": true } } } }, "strokeWidth": { "type": { "numeric": true } }, "lineStyle": { "type": { "enumeration": [ { "value": "solid", "displayName": "Continu" }, { "value": "dashed", "displayName": "Pointillés" }, { "value": "dotted", "displayName": "Points" } ] } }, "showMarkers": { "type": { "bool": true } }, "markerSize": { "type": { "numeric": true } }, "stepped": { "type": { "bool": true } } } },
+    "gradientSettings7": { "displayName": "Dégradé 7", "properties": { "showGradient": { "type": { "bool": true } }, "gradientColor": { "type": { "fill": { "solid": { "color": true } } } }, "gradientIntensity": { "type": { "numeric": true } }, "gradientDirection": { "type": { "enumeration": [ { "value": "vertical", "displayName": "Haut → Bas" }, { "value": "vertical-reverse", "displayName": "Bas → Haut" }, { "value": "horizontal", "displayName": "Gauche → Droite" }, { "value": "horizontal-reverse", "displayName": "Droite → Gauche" }, { "value": "diagonal", "displayName": "Diagonale ↘" }, { "value": "diagonal-reverse", "displayName": "Diagonale ↙" } ] } } } },
+
+    "lineSettings8": { "displayName": "Ligne 8", "properties": { "lineColor": { "type": { "fill": { "solid": { "color": true } } } }, "strokeWidth": { "type": { "numeric": true } }, "lineStyle": { "type": { "enumeration": [ { "value": "solid", "displayName": "Continu" }, { "value": "dashed", "displayName": "Pointillés" }, { "value": "dotted", "displayName": "Points" } ] } }, "showMarkers": { "type": { "bool": true } }, "markerSize": { "type": { "numeric": true } }, "stepped": { "type": { "bool": true } } } },
+    "gradientSettings8": { "displayName": "Dégradé 8", "properties": { "showGradient": { "type": { "bool": true } }, "gradientColor": { "type": { "fill": { "solid": { "color": true } } } }, "gradientIntensity": { "type": { "numeric": true } }, "gradientDirection": { "type": { "enumeration": [ { "value": "vertical", "displayName": "Haut → Bas" }, { "value": "vertical-reverse", "displayName": "Bas → Haut" }, { "value": "horizontal", "displayName": "Gauche → Droite" }, { "value": "horizontal-reverse", "displayName": "Droite → Gauche" }, { "value": "diagonal", "displayName": "Diagonale ↘" }, { "value": "diagonal-reverse", "displayName": "Diagonale ↙" } ] } } } },
+
+    "lineSettings9": { "displayName": "Ligne 9", "properties": { "lineColor": { "type": { "fill": { "solid": { "color": true } } } }, "strokeWidth": { "type": { "numeric": true } }, "lineStyle": { "type": { "enumeration": [ { "value": "solid", "displayName": "Continu" }, { "value": "dashed", "displayName": "Pointillés" }, { "value": "dotted", "displayName": "Points" } ] } }, "showMarkers": { "type": { "bool": true } }, "markerSize": { "type": { "numeric": true } }, "stepped": { "type": { "bool": true } } } },
+    "gradientSettings9": { "displayName": "Dégradé 9", "properties": { "showGradient": { "type": { "bool": true } }, "gradientColor": { "type": { "fill": { "solid": { "color": true } } } }, "gradientIntensity": { "type": { "numeric": true } }, "gradientDirection": { "type": { "enumeration": [ { "value": "vertical", "displayName": "Haut → Bas" }, { "value": "vertical-reverse", "displayName": "Bas → Haut" }, { "value": "horizontal", "displayName": "Gauche → Droite" }, { "value": "horizontal-reverse", "displayName": "Droite → Gauche" }, { "value": "diagonal", "displayName": "Diagonale ↘" }, { "value": "diagonal-reverse", "displayName": "Diagonale ↙" } ] } } } },
+
+    "lineSettings10": { "displayName": "Ligne 10", "properties": { "lineColor": { "type": { "fill": { "solid": { "color": true } } } }, "strokeWidth": { "type": { "numeric": true } }, "lineStyle": { "type": { "enumeration": [ { "value": "solid", "displayName": "Continu" }, { "value": "dashed", "displayName": "Pointillés" }, { "value": "dotted", "displayName": "Points" } ] } }, "showMarkers": { "type": { "bool": true } }, "markerSize": { "type": { "numeric": true } }, "stepped": { "type": { "bool": true } } } },
+    "gradientSettings10": { "displayName": "Dégradé 10", "properties": { "showGradient": { "type": { "bool": true } }, "gradientColor": { "type": { "fill": { "solid": { "color": true } } } }, "gradientIntensity": { "type": { "numeric": true } }, "gradientDirection": { "type": { "enumeration": [ { "value": "vertical", "displayName": "Haut → Bas" }, { "value": "vertical-reverse", "displayName": "Bas → Haut" }, { "value": "horizontal", "displayName": "Gauche → Droite" }, { "value": "horizontal-reverse", "displayName": "Droite → Gauche" }, { "value": "diagonal", "displayName": "Diagonale ↘" }, { "value": "diagonal-reverse", "displayName": "Diagonale ↙" } ] } } } },
+
     "xAxisSettings": {
       "displayName": "Axe X",
       "properties": {
-        "show": {
-          "displayName": "Afficher l'axe X",
-          "type": { "bool": true }
-        },
-        "axisColor": {
-          "displayName": "Couleur",
-          "type": { "fill": { "solid": { "color": true } } }
-        },
-        "fontSize": {
-          "displayName": "Taille du texte",
-          "type": { "numeric": true }
-        },
-        "fontFamily": {
-          "displayName": "Famille de police",
-          "type": {
-            "enumeration": [
-              { "value": "Segoe UI", "displayName": "Segoe UI" },
-              { "value": "Arial", "displayName": "Arial" },
-              { "value": "Courier New", "displayName": "Courier New" },
-              { "value": "Georgia", "displayName": "Georgia" },
-              { "value": "Verdana", "displayName": "Verdana" }
-            ]
-          }
-        },
-        "title": {
-          "displayName": "Afficher le titre",
-          "type": { "bool": true }
-        },
-        "titleText": {
-          "displayName": "Texte du titre",
-          "type": { "text": true }
-        }
+        "show": { "type": { "bool": true } },
+        "axisColor": { "type": { "fill": { "solid": { "color": true } } } },
+        "fontSize": { "type": { "numeric": true } },
+        "fontFamily": { "type": { "enumeration": [ { "value": "Segoe UI", "displayName": "Segoe UI" }, { "value": "Arial", "displayName": "Arial" }, { "value": "Courier New", "displayName": "Courier New" }, { "value": "Georgia", "displayName": "Georgia" }, { "value": "Verdana", "displayName": "Verdana" } ] } },
+        "title": { "type": { "bool": true } },
+        "titleText": { "type": { "text": true } }
       }
     },
     "yAxisSettings": {
       "displayName": "Axe Y",
       "properties": {
-        "show": {
-          "displayName": "Afficher l'axe Y",
-          "type": { "bool": true }
-        },
-        "axisColor": {
-          "displayName": "Couleur",
-          "type": { "fill": { "solid": { "color": true } } }
-        },
-        "fontSize": {
-          "displayName": "Taille du texte",
-          "type": { "numeric": true }
-        },
-        "fontFamily": {
-          "displayName": "Famille de police",
-          "type": {
-            "enumeration": [
-              { "value": "Segoe UI", "displayName": "Segoe UI" },
-              { "value": "Arial", "displayName": "Arial" },
-              { "value": "Courier New", "displayName": "Courier New" },
-              { "value": "Georgia", "displayName": "Georgia" },
-              { "value": "Verdana", "displayName": "Verdana" }
-            ]
-          }
-        },
-        "title": {
-          "displayName": "Afficher le titre",
-          "type": { "bool": true }
-        },
-        "titleText": {
-          "displayName": "Texte du titre",
-          "type": { "text": true }
-        },
-        "useYAxisBis": {
-          "displayName": "Afficher axe Y bis",
-          "type": { "bool": true }
-        }
+        "show": { "type": { "bool": true } },
+        "axisColor": { "type": { "fill": { "solid": { "color": true } } } },
+        "fontSize": { "type": { "numeric": true } },
+        "fontFamily": { "type": { "enumeration": [ { "value": "Segoe UI", "displayName": "Segoe UI" }, { "value": "Arial", "displayName": "Arial" }, { "value": "Courier New", "displayName": "Courier New" }, { "value": "Georgia", "displayName": "Georgia" }, { "value": "Verdana", "displayName": "Verdana" } ] } },
+        "title": { "type": { "bool": true } },
+        "titleText": { "type": { "text": true } }
       }
     },
     "gridSettings": {
       "displayName": "Grille",
       "properties": {
-        "showHorizontal": {
-          "displayName": "Grille horizontale",
-          "type": { "bool": true }
-        },
-        "showVertical": {
-          "displayName": "Grille verticale",
-          "type": { "bool": true }
-        },
-        "gridColor": {
-          "displayName": "Couleur de la grille",
-          "type": { "fill": { "solid": { "color": true } } }
-        },
-        "gridThickness": {
-          "displayName": "Épaisseur",
-          "type": { "numeric": true }
-        },
-        "gridStyle": {
-          "displayName": "Style",
-          "type": {
-            "enumeration": [
-              { "value": "solid", "displayName": "Continu" },
-              { "value": "dashed", "displayName": "Pointillés" }
-            ]
-          }
-        }
+        "showHorizontal": { "type": { "bool": true } },
+        "showVertical": { "type": { "bool": true } },
+        "gridColor": { "type": { "fill": { "solid": { "color": true } } } },
+        "gridThickness": { "type": { "numeric": true } },
+        "gridStyle": { "type": { "enumeration": [ { "value": "solid", "displayName": "Continu" }, { "value": "dashed", "displayName": "Pointillés" } ] } }
       }
     },
     "dataLabels": {
       "displayName": "Étiquettes de données",
       "properties": {
-        "show": {
-          "displayName": "Afficher les étiquettes",
-          "type": { "bool": true }
-        },
-        "color": {
-          "displayName": "Couleur",
-          "type": { "fill": { "solid": { "color": true } } }
-        },
-        "fontSize": {
-          "displayName": "Taille du texte",
-          "type": { "numeric": true }
-        },
-        "fontFamily": {
-          "displayName": "Famille de police",
-          "type": {
-            "enumeration": [
-              { "value": "Segoe UI", "displayName": "Segoe UI" },
-              { "value": "Arial", "displayName": "Arial" },
-              { "value": "Courier New", "displayName": "Courier New" }
-            ]
-          }
-        },
-        "displayUnits": {
-          "displayName": "Unités d'affichage",
-          "type": {
-            "enumeration": [
-              { "value": "0", "displayName": "Auto" },
-              { "value": "1", "displayName": "Aucun" },
-              { "value": "1000", "displayName": "Milliers (K)" },
-              { "value": "1000000", "displayName": "Millions (M)" },
-              { "value": "1000000000", "displayName": "Milliards (Md)" }
-            ]
-          }
-        },
-        "precision": {
-          "displayName": "Décimales",
-          "type": { "numeric": true }
-        }
+        "show": { "type": { "bool": true } },
+        "color": { "type": { "fill": { "solid": { "color": true } } } },
+        "fontSize": { "type": { "numeric": true } },
+        "fontFamily": { "type": { "enumeration": [ { "value": "Segoe UI", "displayName": "Segoe UI" }, { "value": "Arial", "displayName": "Arial" }, { "value": "Courier New", "displayName": "Courier New" } ] } },
+        "displayUnits": { "type": { "enumeration": [ { "value": "0", "displayName": "Auto" }, { "value": "1", "displayName": "Aucun" }, { "value": "1000", "displayName": "Milliers (K)" }, { "value": "1000000", "displayName": "Millions (M)" }, { "value": "1000000000", "displayName": "Milliards (Md)" } ] } },
+        "precision": { "type": { "numeric": true } }
       }
     },
     "legend": {
       "displayName": "Légende",
       "properties": {
-        "show": {
-          "displayName": "Afficher la légende",
-          "type": { "bool": true }
-        },
-        "position": {
-          "displayName": "Position",
-          "type": {
-            "enumeration": [
-              { "value": "Top", "displayName": "Haut" },
-              { "value": "Bottom", "displayName": "Bas" },
-              { "value": "Left", "displayName": "Gauche" },
-              { "value": "Right", "displayName": "Droite" },
-              { "value": "TopCenter", "displayName": "Haut centre" },
-              { "value": "BottomCenter", "displayName": "Bas centre" }
-            ]
-          }
-        },
-        "fontColor": {
-          "displayName": "Couleur",
-          "type": { "fill": { "solid": { "color": true } } }
-        },
-        "fontSize": {
-          "displayName": "Taille du texte",
-          "type": { "numeric": true }
-        },
-        "fontFamily": {
-          "displayName": "Famille de police",
-          "type": {
-            "enumeration": [
-              { "value": "Segoe UI", "displayName": "Segoe UI" },
-              { "value": "Arial", "displayName": "Arial" },
-              { "value": "Courier New", "displayName": "Courier New" }
-            ]
-          }
-        }
+        "show": { "type": { "bool": true } },
+        "position": { "type": { "enumeration": [ { "value": "Top", "displayName": "Haut" }, { "value": "Bottom", "displayName": "Bas" }, { "value": "Left", "displayName": "Gauche" }, { "value": "Right", "displayName": "Droite" }, { "value": "TopCenter", "displayName": "Haut centre" }, { "value": "BottomCenter", "displayName": "Bas centre" } ] } },
+        "fontColor": { "type": { "fill": { "solid": { "color": true } } } },
+        "fontSize": { "type": { "numeric": true } },
+        "fontFamily": { "type": { "enumeration": [ { "value": "Segoe UI", "displayName": "Segoe UI" }, { "value": "Arial", "displayName": "Arial" }, { "value": "Courier New", "displayName": "Courier New" } ] } }
       }
     }
   },
