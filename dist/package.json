@@ -1,0 +1,17 @@
+{
+		"version": "1.0.0.0",
+		"author": {"name":"Alexan Leblois","email":"lebloisalexan@gmail.com"},
+		"resources": [
+			{
+				"resourceId": "rId0",
+				"sourceType": 5,
+				"file": "resources/courbedegrade0E5B94303DBB4B71884B9B500B8496FB.pbiviz.json"
+			}
+		],
+		"visual": {"name":"courbedegrade","displayName":"courbedegrade","guid":"courbedegrade0E5B94303DBB4B71884B9B500B8496FB","visualClassName":"Visual","version":"1.0.0.0","description":"courbeperso","supportUrl":"a","gitHubUrl":""},
+		"metadata": {
+			"pbivizjson": {
+				"resourceId": "rId0"
+			}
+		}
+	}

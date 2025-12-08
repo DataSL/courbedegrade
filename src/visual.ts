@@ -534,12 +534,8 @@ export class Visual implements IVisual {
     }
 
     private formatDate(value: string): string {
-        const date = new Date(value);
-        if (isNaN(date.getTime())) return value;
-        try {
-            return new Intl.DateTimeFormat('fr-FR', { month: 'short', year: 'numeric' }).format(date);
-        } catch (e) {
-            return value;
-        }
+        // Simplement retourner la valeur telle quelle
+        // Power BI envoie déjà le bon format selon le niveau de drill
+        return value.toString();
     }
 }
