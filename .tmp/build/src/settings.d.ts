@@ -50,6 +50,8 @@ declare class YAxisSettingsCard extends FormattingSettingsCard {
     fontFamily: formattingSettings.ItemDropdown;
     title: formattingSettings.ToggleSwitch;
     titleText: formattingSettings.TextInput;
+    displayUnits: formattingSettings.ItemDropdown;
+    precision: formattingSettings.NumUpDown;
     useYAxisBis: formattingSettings.ToggleSwitch;
     name: string;
     displayName: string;

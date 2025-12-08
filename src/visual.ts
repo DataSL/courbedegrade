@@ -98,17 +98,29 @@ export class Visual implements IVisual {
 
     private getNiceStep(maxValue: number): number {
         if (maxValue === 0) return 1;
-        const steps = [1, 2, 2.5, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
+        
+        // Déterminer l'ordre de grandeur
+        const magnitude = Math.floor(Math.log10(maxValue));
+        const powerOf10 = Math.pow(10, magnitude);
+        
+        // Gamme de multiplicateurs pour avoir des divisions "propres"
+        const multipliers = [1, 2, 2.5, 5, 10];
+        
+        // Nombre de divisions souhaitées
         const minTicks = 4;
         const maxTicks = 8;
-        for (let i = 0; i < steps.length; i++) {
-            const ticks = Math.ceil(maxValue / steps[i]);
+        
+        // Tester chaque multiplicateur
+        for (let mult of multipliers) {
+            const step = mult * powerOf10;
+            const ticks = Math.ceil(maxValue / step);
+            
             if (ticks >= minTicks && ticks <= maxTicks) {
-                return steps[i];
+                return step;
             }
         }
-        // Fallback simple si hors range
-        const powerOf10 = Math.pow(10, Math.floor(Math.log10(maxValue)));
+        
+        // Si aucun ne convient, retourner powerOf10
         return powerOf10;
     }
 
@@ -129,7 +141,7 @@ export class Visual implements IVisual {
         this.svg.setAttribute("height", options.viewport.height.toString());
 
         const cats = dataView.categorical.categories[0].values;
-        const allSeries = dataView.categorical.values; // Toutes les séries de données
+        const allSeries = dataView.categorical.values;
 
         // Paramètres généraux
         const showXAxis = this.formattingSettings.xAxisSettings.show.value;
@@ -141,6 +153,8 @@ export class Visual implements IVisual {
         const yAxisColor = this.formattingSettings.yAxisSettings.axisColor.value.value;
         const yAxisFontSize = this.formattingSettings.yAxisSettings.fontSize.value;
         const yAxisFontFamily = this.formattingSettings.yAxisSettings.fontFamily.value.value.toString();
+        const yAxisDisplayUnits = this.formattingSettings.yAxisSettings.displayUnits.value.value.toString();
+        const yAxisPrecision = this.formattingSettings.yAxisSettings.precision.value;
 
         const showHorizontalGrid = this.formattingSettings.gridSettings.showHorizontal.value;
         const showVerticalGrid = this.formattingSettings.gridSettings.showVertical.value;
@@ -220,7 +234,7 @@ export class Visual implements IVisual {
                 text.setAttribute("y", yPos.toString());
                 text.setAttribute("text-anchor", "end");
                 text.setAttribute("alignment-baseline", "middle");
-                text.textContent = this.formatNumber(val);
+                text.textContent = this.formatYAxisValue(val, yAxisDisplayUnits, yAxisPrecision);
                 text.setAttribute("fill", yAxisColor);
                 text.setAttribute("font-size", yAxisFontSize.toString());
                 text.setAttribute("font-family", yAxisFontFamily);
@@ -530,7 +544,73 @@ export class Visual implements IVisual {
     }
 
     private formatNumber(num: number): string {
-        return Math.round(num).toLocaleString('fr-FR');
+        // Déterminer le nombre de décimales nécessaires
+        if (num === 0) return "0";
+        
+        const absNum = Math.abs(num);
+        
+        // Pour les grands nombres (>= 1000), pas de décimales
+        if (absNum >= 1000) {
+            return Math.round(num).toLocaleString('fr-FR');
+        }
+        
+        // Pour les nombres entre 1 et 999, max 2 décimales si nécessaire
+        if (absNum >= 1) {
+            const rounded = Math.round(num * 100) / 100;
+            return rounded.toLocaleString('fr-FR', { 
+                minimumFractionDigits: 0, 
+                maximumFractionDigits: 2 
+            });
+        }
+        
+        // Pour les petits nombres (< 1), afficher jusqu'à 4 décimales
+        const magnitude = Math.floor(Math.log10(absNum));
+        const decimals = Math.min(4, Math.abs(magnitude) + 1);
+        
+        return num.toLocaleString('fr-FR', { 
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        });
+    }
+
+    private formatYAxisValue(value: number, displayUnits: string, precision: number): string {
+        let formatted = value;
+        let suffix = "";
+
+        const units = parseInt(displayUnits);
+
+        if (units === 0) {
+            // Auto : détection automatique
+            if (value >= 1000000000) {
+                formatted = value / 1000000000;
+                suffix = " Mds";
+            } else if (value >= 1000000) {
+                formatted = value / 1000000;
+                suffix = " M";
+            } else if (value >= 1000) {
+                formatted = value / 1000;
+                suffix = " K";
+            }
+        } else if (units === 1000) {
+            formatted = value / 1000;
+            suffix = " K";
+        } else if (units === 1000000) {
+            formatted = value / 1000000;
+            suffix = " M";
+        } else if (units === 1000000000) {
+            formatted = value / 1000000000;
+            suffix = " Mds";
+        }
+
+        // Appliquer la précision
+        if (precision === 0) {
+            return Math.round(formatted).toLocaleString('fr-FR') + suffix;
+        } else {
+            return formatted.toLocaleString('fr-FR', {
+                minimumFractionDigits: precision,
+                maximumFractionDigits: precision
+            }) + suffix;
+        }
     }
 
     private formatDate(value: string): string {

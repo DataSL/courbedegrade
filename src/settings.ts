@@ -253,6 +253,25 @@ class YAxisSettingsCard extends FormattingSettingsCard {
         placeholder: "Titre de l'axe Y"
     });
 
+    displayUnits = new formattingSettings.ItemDropdown({
+        name: "displayUnits",
+        displayName: "Unités d'affichage",
+        items: [
+            { value: "0", displayName: "Auto" },
+            { value: "1", displayName: "Aucun" },
+            { value: "1000", displayName: "Milliers (K)" },
+            { value: "1000000", displayName: "Millions (M)" },
+            { value: "1000000000", displayName: "Milliards (Mds)" }
+        ],
+        value: { value: "0", displayName: "Auto" }
+    });
+
+    precision = new formattingSettings.NumUpDown({
+        name: "precision",
+        displayName: "Décimales",
+        value: 0
+    });
+
     useYAxisBis = new formattingSettings.ToggleSwitch({
         name: "useYAxisBis",
         displayName: "Afficher axe Y bis",
@@ -266,6 +285,8 @@ class YAxisSettingsCard extends FormattingSettingsCard {
         this.axisColor,
         this.fontSize,
         this.fontFamily,
+        this.displayUnits,
+        this.precision,
         this.title,
         this.titleText,
         this.useYAxisBis
@@ -362,7 +383,7 @@ class DataLabelsCard extends FormattingSettingsCard {
             { value: "1", displayName: "Aucun" },
             { value: "1000", displayName: "Milliers (K)" },
             { value: "1000000", displayName: "Millions (M)" },
-            { value: "1000000000", displayName: "Milliards (Md)" }
+            { value: "1000000000", displayName: "Milliards (Mds)" }
         ],
         value: { value: "0", displayName: "Auto" }
     });

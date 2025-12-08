@@ -27,5 +27,6 @@ export declare class Visual implements IVisual {
     getFormattingModel(): powerbi.visuals.FormattingModel;
     private applyGradientDirection;
     private formatNumber;
+    private formatYAxisValue;
     private formatDate;
 }
