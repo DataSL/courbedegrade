@@ -530,7 +530,22 @@ class Visual {
         return d;
     }
     getFormattingModel() {
-        return this.formattingSettingsService.buildFormattingModel(this.formattingSettings);
+        // Compter le nombre de séries (champs Values)
+        let nbSeries = 1;
+        if (this.dataView && this.dataView.categorical && this.dataView.categorical.values) {
+            nbSeries = this.dataView.categorical.values.length;
+        }
+        // Liste dynamique des cards à afficher
+        const cards = [];
+        // Ajouter seulement les groupes nécessaires
+        for (let i = 1; i <= nbSeries; i++) {
+            cards.push(this.formattingSettings[`lineSettings${i}`]);
+            cards.push(this.formattingSettings[`gradientSettings${i}`]);
+        }
+        // Ajouter les autres groupes généraux
+        cards.push(this.formattingSettings.xAxisSettings, this.formattingSettings.yAxisSettings, this.formattingSettings.gridSettings, this.formattingSettings.dataLabels, this.formattingSettings.legend);
+        // Générer le modèle avec uniquement les cards utiles
+        return this.formattingSettingsService.buildFormattingModel({ cards });
     }
     applyGradientDirection(gradient, direction) {
         switch (direction) {
