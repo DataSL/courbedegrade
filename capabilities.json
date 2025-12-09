@@ -100,7 +100,10 @@
         "fontSize": { "type": { "numeric": true } },
         "fontFamily": { "type": { "enumeration": [ { "value": "Segoe UI", "displayName": "Segoe UI" }, { "value": "Arial", "displayName": "Arial" }, { "value": "Courier New", "displayName": "Courier New" }, { "value": "Georgia", "displayName": "Georgia" }, { "value": "Verdana", "displayName": "Verdana" } ] } },
         "title": { "type": { "bool": true } },
-        "titleText": { "type": { "text": true } }
+        "titleText": { "type": { "text": true } },
+        "displayUnits": { "type": { "enumeration": [ { "value": "0", "displayName": "Auto" }, { "value": "1", "displayName": "Aucun" }, { "value": "1000", "displayName": "Milliers (K)" }, { "value": "1000000", "displayName": "Millions (M)" }, { "value": "1000000000", "displayName": "Milliards (Mds)" } ] } },
+        "precision": { "type": { "numeric": true } },
+        "useYAxisBis": { "type": { "bool": true } }
       }
     },
     "gridSettings": {
@@ -120,8 +123,8 @@
         "color": { "type": { "fill": { "solid": { "color": true } } } },
         "fontSize": { "type": { "numeric": true } },
         "fontFamily": { "type": { "enumeration": [ { "value": "Segoe UI", "displayName": "Segoe UI" }, { "value": "Arial", "displayName": "Arial" }, { "value": "Courier New", "displayName": "Courier New" } ] } },
-        "displayUnits": { "type": { "enumeration": [ { "value": "0", "displayName": "Auto" }, { "value": "1", "displayName": "Aucun" }, { "value": "1000", "displayName": "Milliers (K)" }, { "value": "1000000", "displayName": "Millions (M)" }, { "value": "1000000000", "displayName": "Milliards (Md)" } ] } },
-        "precision": { "type": { "numeric": true } }
+        "displayUnits": { "type": { "numeric": true } },
+        "precision": { "type": { "integer": true } }
       }
     },
     "legend": {

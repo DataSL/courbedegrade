@@ -250,6 +250,13 @@ class Visual {
         }
         // 3. BOUCLE SUR LES SÉRIES (LIGNES)
         const legendItems = [];
+        // Récupération des paramètres des étiquettes de données
+        const showDataLabels = this.formattingSettings.dataLabels.show.value;
+        const dataLabelsColor = this.formattingSettings.dataLabels.color.value.value;
+        const dataLabelsFontSize = this.formattingSettings.dataLabels.fontSize.value;
+        const dataLabelsFontFamily = this.formattingSettings.dataLabels.fontFamily.value.value.toString();
+        const dataLabelsDisplayUnits = parseInt(this.formattingSettings.dataLabels.displayUnits.value.value.toString());
+        const dataLabelsPrecision = this.formattingSettings.dataLabels.precision.value;
         allSeries.forEach((series, index) => {
             if (index >= 10)
                 return;
@@ -326,6 +333,24 @@ class Visual {
                     circle.setAttribute("r", markerSize.toString());
                     circle.setAttribute("fill", lineColor);
                     this.svg.appendChild(circle);
+                });
+            }
+            // Étiquettes de données
+            if (showDataLabels) {
+                points.forEach((p, i) => {
+                    const value = Number(vals[i]);
+                    const labelText = this.formatDataLabel(value, dataLabelsDisplayUnits, dataLabelsPrecision);
+                    const label = document.createElementNS(ns, "text");
+                    label.classList.add("custom-datalabel");
+                    label.setAttribute("x", (this.margin.left + p[0]).toString());
+                    label.setAttribute("y", (this.margin.top + p[1] - 10).toString());
+                    label.setAttribute("text-anchor", "middle");
+                    label.setAttribute("fill", dataLabelsColor);
+                    label.setAttribute("font-size", dataLabelsFontSize.toString());
+                    label.setAttribute("font-family", dataLabelsFontFamily);
+                    label.setAttribute("font-weight", "500");
+                    label.textContent = labelText;
+                    this.svg.appendChild(label);
                 });
             }
             // Zones de survol (Tooltip) avec support du drill
@@ -439,27 +464,31 @@ class Visual {
         let formatted = value;
         let suffix = "";
         if (displayUnits === 0) {
-            if (value >= 1000000000) {
+            // Auto
+            if (Math.abs(value) >= 1000000000) {
                 formatted = value / 1000000000;
-                suffix = "Md";
+                suffix = " Mds";
             }
-            else if (value >= 1000000) {
+            else if (Math.abs(value) >= 1000000) {
                 formatted = value / 1000000;
-                suffix = "M";
+                suffix = " M";
             }
-            else if (value >= 1000) {
+            else if (Math.abs(value) >= 1000) {
                 formatted = value / 1000;
-                suffix = "K";
+                suffix = " K";
             }
         }
-        else if (displayUnits > 1) {
-            formatted = value / displayUnits;
-            if (displayUnits === 1000)
-                suffix = "K";
-            else if (displayUnits === 1000000)
-                suffix = "M";
-            else if (displayUnits === 1000000000)
-                suffix = "Md";
+        else if (displayUnits === 1000) {
+            formatted = value / 1000;
+            suffix = " K";
+        }
+        else if (displayUnits === 1000000) {
+            formatted = value / 1000000;
+            suffix = " M";
+        }
+        else if (displayUnits === 1000000000) {
+            formatted = value / 1000000000;
+            suffix = " Mds";
         }
         return formatted.toFixed(precision) + suffix;
     }
