@@ -161,21 +161,39 @@ class Visual {
         }
         const drawW = width - this.margin.left - this.margin.right;
         const drawH = height - this.margin.top - this.margin.bottom;
-        // C. CALCUL ÉCHELLE Y GLOBALE (Basé sur le MAX de TOUTES les séries)
-        let globalMax = 0;
+        const getYPos = (val) => drawH - ((val - niceMin) / (niceMax - niceMin) * drawH);
+        // C. CALCUL ÉCHELLE Y GLOBALE (Basé sur le MIN et MAX de TOUTES les séries)
+        let globalMax = Number.NEGATIVE_INFINITY;
+        let globalMin = Number.POSITIVE_INFINITY;
         allSeries.forEach(series => {
             series.values.forEach(v => {
                 const val = Number(v);
-                if (!isNaN(val) && val > globalMax)
-                    globalMax = val;
+                if (!isNaN(val)) {
+                    if (val > globalMax)
+                        globalMax = val;
+                    if (val < globalMin)
+                        globalMin = val;
+                }
             });
         });
-        const stepSize = this.getNiceStep(globalMax);
+        // Si tout est NaN, fallback à 0
+        if (!isFinite(globalMax))
+            globalMax = 0;
+        if (!isFinite(globalMin))
+            globalMin = 0;
+        // Calcul du step
+        const absMax = Math.max(Math.abs(globalMax), Math.abs(globalMin));
+        const stepSize = this.getNiceStep(absMax);
+        // Bornes "propres"
+        let niceMin = Math.floor(globalMin / stepSize) * stepSize;
         let niceMax = Math.ceil(globalMax / stepSize) * stepSize;
-        if ((niceMax / stepSize) > 10)
-            niceMax = stepSize * 10; // Eviter trop de ticks
-        if (niceMax === 0)
-            niceMax = stepSize;
+        if (niceMin === niceMax) {
+            // Cas plat
+            niceMin = 0;
+        }
+        if ((niceMax - niceMin) / stepSize > 10) {
+            niceMax = niceMin + stepSize * 10;
+        }
         // D. DESSIN
         this.mainGroup.setAttribute("transform", `translate(${this.margin.left}, ${this.margin.top})`);
         // Nettoyage
@@ -187,8 +205,8 @@ class Visual {
         this.svg.querySelectorAll(".legend").forEach(l => l.remove());
         // 1. GRILLE ET AXE Y
         if (showYAxis) {
-            for (let val = 0; val <= niceMax; val += stepSize) {
-                const yPos = drawH - (val / niceMax * drawH);
+            for (let val = niceMin; val <= niceMax; val += stepSize) {
+                const yPos = drawH - ((val - niceMin) / (niceMax - niceMin) * drawH);
                 if (showHorizontalGrid) {
                     const line = document.createElementNS(ns, "line");
                     line.setAttribute("x1", "0");
@@ -280,7 +298,7 @@ class Visual {
             // Calcul des points
             const points = cats.map((cat, i) => {
                 const x = (i / (cats.length - 1)) * drawW;
-                const y = drawH - (Number(vals[i]) / niceMax * drawH);
+                const y = getYPos(Number(vals[i]));
                 return [x, y];
             });
             if (points.length < 2)
@@ -305,7 +323,8 @@ class Visual {
             let d = stepped ? this.buildSteppedPath(points) : this.buildSmoothPath(points);
             // Aire
             const pathArea = document.createElementNS(ns, "path");
-            const areaD = `${d} L ${points[points.length - 1][0]},${drawH} L ${points[0][0]},${drawH} Z`;
+            const yZero = getYPos(0);
+            const areaD = `${d} L ${points[points.length - 1][0]},${yZero} L ${points[0][0]},${yZero} Z`;
             pathArea.setAttribute("d", areaD);
             pathArea.setAttribute("fill", showGradient ? `url(#${gradientId})` : "none");
             pathArea.setAttribute("stroke", "none");
@@ -584,15 +603,15 @@ class Visual {
         const units = parseInt(displayUnits);
         if (units === 0) {
             // Auto : détection automatique
-            if (value >= 1000000000) {
+            if (Math.abs(value) >= 1000000000) {
                 formatted = value / 1000000000;
                 suffix = " Mds";
             }
-            else if (value >= 1000000) {
+            else if (Math.abs(value) >= 1000000) {
                 formatted = value / 1000000;
                 suffix = " M";
             }
-            else if (value >= 1000) {
+            else if (Math.abs(value) >= 1000) {
                 formatted = value / 1000;
                 suffix = " K";
             }
