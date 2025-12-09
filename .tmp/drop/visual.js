@@ -116,11 +116,12 @@ class Visual {
         if (!dataView.categorical.categories || !dataView.categorical.values)
             return;
         this.dataView = dataView;
-        const category = dataView.categorical.categories[0];
+        const categoryColumns = dataView.categorical.categories;
+        const category = categoryColumns[0];
         this.formattingSettings = this.formattingSettingsService.populateFormattingSettingsModel(_settings__WEBPACK_IMPORTED_MODULE_0__/* .VisualFormattingSettingsModel */ .S, options.dataViews[0]);
         this.svg.setAttribute("width", options.viewport.width.toString());
         this.svg.setAttribute("height", options.viewport.height.toString());
-        const cats = dataView.categorical.categories[0].values;
+        const cats = categoryColumns[0].values;
         const allSeries = dataView.categorical.values;
         // Paramètres généraux
         const showXAxis = this.formattingSettings.xAxisSettings.show.value;
@@ -259,10 +260,27 @@ class Visual {
                     text.setAttribute("text-anchor", "start");
                 else
                     text.setAttribute("text-anchor", "middle");
-                text.textContent = this.formatDate(cats[i].toString());
                 text.setAttribute("fill", xAxisColor);
                 text.setAttribute("font-size", xAxisFontSize.toString());
                 text.setAttribute("font-family", xAxisFontFamily);
+                if (categoryColumns.length > 1) {
+                    // Affichage hiérarchique : Année (premier niveau) et Mois (dernier niveau)
+                    const firstLevel = categoryColumns[0].values[i].toString();
+                    const lastLevel = categoryColumns[categoryColumns.length - 1].values[i].toString();
+                    const tspan1 = document.createElementNS(ns, "tspan");
+                    tspan1.textContent = firstLevel;
+                    tspan1.setAttribute("x", xPos.toString());
+                    tspan1.setAttribute("dy", "0em");
+                    const tspan2 = document.createElementNS(ns, "tspan");
+                    tspan2.textContent = lastLevel;
+                    tspan2.setAttribute("x", xPos.toString());
+                    tspan2.setAttribute("dy", "1.2em");
+                    text.appendChild(tspan1);
+                    text.appendChild(tspan2);
+                }
+                else {
+                    text.textContent = this.formatDate(cats[i].toString());
+                }
                 this.axisGroup.appendChild(text);
             });
         }
@@ -386,7 +404,14 @@ class Visual {
                 hoverCircle.setAttribute("fill", "transparent");
                 hoverCircle.setAttribute("cursor", "pointer");
                 hoverCircle.addEventListener("mouseenter", (e) => {
-                    const tooltipContent = `<div><strong>${this.formatDate(cats[i].toString())}</strong></div><div>${seriesName}: ${this.formatNumber(Number(vals[i]))}</div>`;
+                    let tooltipTitle = "";
+                    if (categoryColumns.length > 1) {
+                        tooltipTitle = categoryColumns.map(c => c.values[i].toString()).join(" ");
+                    }
+                    else {
+                        tooltipTitle = this.formatDate(cats[i].toString());
+                    }
+                    const tooltipContent = `<div><strong>${tooltipTitle}</strong></div><div>${seriesName}: ${this.formatNumber(Number(vals[i]))}</div>`;
                     this.showTooltip(e.pageX, e.pageY, tooltipContent);
                     const tempCircle = document.createElementNS(ns, "circle");
                     tempCircle.classList.add("temp-marker");

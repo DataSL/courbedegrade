@@ -19,7 +19,7 @@
       "conditions": [
         {
           "category": {
-            "max": 1
+            "max": 5
           },
           "measure": {
             "min": 1,
