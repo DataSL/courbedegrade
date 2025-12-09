@@ -185,6 +185,11 @@ export class Visual implements IVisual {
             this.margin.bottom = 40;
         }
 
+        // Ajustement dynamique de la marge basse si on a 3 niveaux ou plus (pour afficher Année/Mois/Jour)
+        if (categoryColumns.length > 2) {
+            this.margin.bottom += 25;
+        }
+
         const drawW = width - this.margin.left - this.margin.right;
         const drawH = height - this.margin.top - this.margin.bottom;
         const getYPos = (val: number) => drawH - ((val - niceMin) / (niceMax - niceMin) * drawH);
@@ -295,7 +300,7 @@ export class Visual implements IVisual {
                 text.setAttribute("font-family", xAxisFontFamily);
 
                 if (categoryColumns.length > 1) {
-                    // Affichage hiérarchique : Année (premier niveau) et Mois (dernier niveau)
+                    // Affichage hiérarchique
                     const firstLevel = categoryColumns[0].values[i].toString();
                     const lastLevel = categoryColumns[categoryColumns.length - 1].values[i].toString();
                     
@@ -303,14 +308,32 @@ export class Visual implements IVisual {
                     tspan1.textContent = firstLevel;
                     tspan1.setAttribute("x", xPos.toString());
                     tspan1.setAttribute("dy", "0em");
-
-                    const tspan2 = document.createElementNS(ns, "tspan");
-                    tspan2.textContent = lastLevel;
-                    tspan2.setAttribute("x", xPos.toString());
-                    tspan2.setAttribute("dy", "1.2em");
-
                     text.appendChild(tspan1);
-                    text.appendChild(tspan2);
+
+                    if (categoryColumns.length > 2) {
+                        // Cas avec 3 niveaux ou plus (ex: Année, Mois, Jour) -> On affiche Année, Mois, Jour
+                        // On suppose que l'avant-dernier niveau est le mois
+                        const middleLevel = categoryColumns[categoryColumns.length - 2].values[i].toString();
+                        
+                        const tspan2 = document.createElementNS(ns, "tspan");
+                        tspan2.textContent = middleLevel;
+                        tspan2.setAttribute("x", xPos.toString());
+                        tspan2.setAttribute("dy", "1.2em");
+                        text.appendChild(tspan2);
+
+                        const tspan3 = document.createElementNS(ns, "tspan");
+                        tspan3.textContent = lastLevel;
+                        tspan3.setAttribute("x", xPos.toString());
+                        tspan3.setAttribute("dy", "1.2em");
+                        text.appendChild(tspan3);
+                    } else {
+                        // Cas standard 2 niveaux (ex: Année, Mois)
+                        const tspan2 = document.createElementNS(ns, "tspan");
+                        tspan2.textContent = lastLevel;
+                        tspan2.setAttribute("x", xPos.toString());
+                        tspan2.setAttribute("dy", "1.2em");
+                        text.appendChild(tspan2);
+                    }
                 } else {
                     text.textContent = this.formatDate(cats[i].toString());
                 }
