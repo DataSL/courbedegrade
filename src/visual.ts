@@ -86,7 +86,35 @@ export class Visual implements IVisual {
     }
 
     private showTooltip(x: number, y: number, content: string) {
-        this.tooltip.innerHTML = content;
+        // Nettoyer le contenu précédent
+        while (this.tooltip.firstChild) {
+            this.tooltip.removeChild(this.tooltip.firstChild);
+        }
+
+        // Découper le contenu en lignes (suppose le format "<div>...</div><div>...</div>")
+        // On extrait le texte entre les balises <div>...</div>
+        const divRegex = /<div[^>]*>(.*?)<\/div>/g;
+        let match;
+        while ((match = divRegex.exec(content)) !== null) {
+            const div = document.createElement("div");
+            // Si le contenu contient <strong>...</strong>, on le gère aussi
+            const strongRegex = /<strong[^>]*>(.*?)<\/strong>/;
+            const strongMatch = strongRegex.exec(match[1]);
+            if (strongMatch) {
+                const strong = document.createElement("strong");
+                strong.textContent = strongMatch[1];
+                div.appendChild(strong);
+                // Ajoute le reste du texte après </strong>
+                const afterStrong = match[1].replace(strongRegex, "");
+                if (afterStrong.trim()) {
+                    div.appendChild(document.createTextNode(afterStrong));
+                }
+            } else {
+                div.textContent = match[1];
+            }
+            this.tooltip.appendChild(div);
+        }
+
         this.tooltip.style.display = "block";
         this.tooltip.style.left = (x + 10) + "px";
         this.tooltip.style.top = (y - 10) + "px";
@@ -230,8 +258,8 @@ export class Visual implements IVisual {
         this.mainGroup.setAttribute("transform", `translate(${this.margin.left}, ${this.margin.top})`);
         
         // Nettoyage
-        this.axisGroup.innerHTML = "";
-        this.linesGroup.innerHTML = "";
+        while (this.axisGroup.firstChild) this.axisGroup.removeChild(this.axisGroup.firstChild);
+        while (this.linesGroup.firstChild) this.linesGroup.removeChild(this.linesGroup.firstChild);
         this.svg.querySelectorAll(".custom-marker").forEach(m => m.remove());
         this.svg.querySelectorAll(".custom-datalabel").forEach(l => l.remove());
         this.svg.querySelectorAll(".custom-hover").forEach(h => h.remove());
