@@ -5,8 +5,8 @@ import VisualConstructorOptions = powerbiVisualsApi.extensibility.visual.VisualC
 import DialogConstructorOptions = powerbiVisualsApi.extensibility.visual.DialogConstructorOptions;
 var powerbiKey: any = "powerbi";
 var powerbi: any = window[powerbiKey];
-var courbedegrade0E5B94303DBB4B71884B9B500B8496FB_DEBUG: IVisualPlugin = {
-    name: 'courbedegrade0E5B94303DBB4B71884B9B500B8496FB_DEBUG',
+var courbedegrade0E5B94303DBB4B71884B9B500B8496FB: IVisualPlugin = {
+    name: 'courbedegrade0E5B94303DBB4B71884B9B500B8496FB',
     displayName: 'courbedegrade',
     class: 'Visual',
     apiVersion: '5.3.0',
@@ -27,6 +27,6 @@ var courbedegrade0E5B94303DBB4B71884B9B500B8496FB_DEBUG: IVisualPlugin = {
 if (typeof powerbi !== "undefined") {
     powerbi.visuals = powerbi.visuals || {};
     powerbi.visuals.plugins = powerbi.visuals.plugins || {};
-    powerbi.visuals.plugins["courbedegrade0E5B94303DBB4B71884B9B500B8496FB_DEBUG"] = courbedegrade0E5B94303DBB4B71884B9B500B8496FB_DEBUG;
+    powerbi.visuals.plugins["courbedegrade0E5B94303DBB4B71884B9B500B8496FB"] = courbedegrade0E5B94303DBB4B71884B9B500B8496FB;
 }
-export default courbedegrade0E5B94303DBB4B71884B9B500B8496FB_DEBUG;
+export default courbedegrade0E5B94303DBB4B71884B9B500B8496FB;
