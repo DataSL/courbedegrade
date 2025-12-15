@@ -74,14 +74,20 @@ export class Visual implements IVisual {
         this.mainGroup.appendChild(this.linesGroup);
         this.svg.appendChild(this.mainGroup);
 
-        // Permettre le context menu (clic droit)
+        // Permettre le context menu (clic droit) sur tout le visuel
         this.svg.addEventListener('contextmenu', (event) => {
             const mouseEvent = event as MouseEvent;
+            // Afficher le menu contextuel Power BI avec les options standard
             this.selectionManager.showContextMenu({}, {
                 x: mouseEvent.clientX,
                 y: mouseEvent.clientY
             });
             event.preventDefault();
+        });
+
+        // Désélectionner lors d'un clic sur le fond
+        this.svg.addEventListener('click', () => {
+            this.selectionManager.clear();
         });
     }
 
@@ -326,6 +332,29 @@ export class Visual implements IVisual {
                 text.setAttribute("fill", xAxisColor);
                 text.setAttribute("font-size", xAxisFontSize.toString());
                 text.setAttribute("font-family", xAxisFontFamily);
+                text.setAttribute("cursor", "pointer");
+
+                // Ajouter le menu contextuel sur les labels de l'axe X
+                text.addEventListener('contextmenu', (event: MouseEvent) => {
+                    const selectionId = this.host.createSelectionIdBuilder()
+                        .withCategory(category, i)
+                        .createSelectionId();
+                    this.selectionManager.showContextMenu(selectionId, {
+                        x: event.clientX,
+                        y: event.clientY
+                    });
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
+
+                // Permettre la sélection au clic sur les labels
+                text.addEventListener('click', (event: MouseEvent) => {
+                    const selectionId = this.host.createSelectionIdBuilder()
+                        .withCategory(category, i)
+                        .createSelectionId();
+                    this.selectionManager.select(selectionId, event.ctrlKey || event.metaKey);
+                    event.stopPropagation();
+                });
 
                 if (categoryColumns.length > 1) {
                     // Affichage hiérarchique
@@ -593,13 +622,17 @@ export class Visual implements IVisual {
                     ? legendY + i * itemHeight 
                     : legendY;
 
+                // Créer un groupe pour chaque élément de légende pour faciliter les interactions
+                const legendItemGroup = document.createElementNS(ns, "g");
+                legendItemGroup.setAttribute("cursor", "pointer");
+
                 const rect = document.createElementNS(ns, "rect");
                 rect.setAttribute("x", xOffset.toString());
                 rect.setAttribute("y", yOffset.toString());
                 rect.setAttribute("width", "15");
                 rect.setAttribute("height", "3");
                 rect.setAttribute("fill", item.color);
-                legendGroup.appendChild(rect);
+                legendItemGroup.appendChild(rect);
 
                 const text = document.createElementNS(ns, "text");
                 text.setAttribute("x", (xOffset + 20).toString());
@@ -609,16 +642,51 @@ export class Visual implements IVisual {
                 text.setAttribute("font-size", legendFontSize.toString());
                 text.setAttribute("font-family", legendFontFamily);
                 text.textContent = item.name;
-                legendGroup.appendChild(text);
+                legendItemGroup.appendChild(text);
+
+                // Ajouter un rectangle invisible pour agrandir la zone cliquable
+                const hitArea = document.createElementNS(ns, "rect");
+                hitArea.setAttribute("x", xOffset.toString());
+                hitArea.setAttribute("y", (yOffset - 5).toString());
+                hitArea.setAttribute("width", "90");
+                hitArea.setAttribute("height", "15");
+                hitArea.setAttribute("fill", "transparent");
+                legendItemGroup.appendChild(hitArea);
+
+                // Menu contextuel sur les éléments de légende
+                legendItemGroup.addEventListener('contextmenu', (event: MouseEvent) => {
+                    // Créer un SelectionId basé sur la série (measure)
+                    const seriesData = allSeries.grouped()[0].values[i];
+                    if (seriesData && seriesData.identity) {
+                        const selectionId = this.host.createSelectionIdBuilder()
+                            .withSeries(dataView.categorical.values, seriesData)
+                            .createSelectionId();
+                        this.selectionManager.showContextMenu(selectionId, {
+                            x: event.clientX,
+                            y: event.clientY
+                        });
+                    }
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
+
+                // Clic pour filtrer/sélectionner la série
+                legendItemGroup.addEventListener('click', (event: MouseEvent) => {
+                    const seriesData = allSeries.grouped()[0].values[i];
+                    if (seriesData && seriesData.identity) {
+                        const selectionId = this.host.createSelectionIdBuilder()
+                            .withSeries(dataView.categorical.values, seriesData)
+                            .createSelectionId();
+                        this.selectionManager.select(selectionId, event.ctrlKey || event.metaKey);
+                    }
+                    event.stopPropagation();
+                });
+
+                legendGroup.appendChild(legendItemGroup);
             });
 
             this.svg.appendChild(legendGroup);
         }
-
-        // Clic sur le fond pour désélectionner
-        this.svg.addEventListener('click', () => {
-            this.selectionManager.clear();
-        });
     }
 
     private formatDataLabel(value: number, displayUnits: number, precision: number): string {
