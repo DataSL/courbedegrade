@@ -29,6 +29,11 @@ export declare class Visual implements IVisual {
      */
     private retrieveLicenseInfo;
     /**
+     * Vérifie les licences en mode production (AppSource)
+     * Cette méthode doit être appelée uniquement après publication sur AppSource
+     */
+    private checkLicenseInProduction;
+    /**
      * Affiche les notifications de licence appropriées selon le statut
      */
     private notifyLicenseStatus;

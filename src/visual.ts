@@ -115,6 +115,21 @@ export class Visual implements IVisual {
      * Utilise getAvailableServicePlans() pour obtenir les plans de service
      */
     private retrieveLicenseInfo() {
+        // 🔓 MODE DÉVELOPPEMENT : Désactiver complètement la vérification de licence
+        // Décommentez la ligne suivante pour activer le système de licensing en production
+        this.checkLicenseInProduction();
+        
+        // En mode développement, toujours considérer que la licence est valide
+        console.log("🔓 Mode développement : Vérification de licence désactivée");
+        this.hasServicePlans = true;
+        this.isLicenseUnsupportedEnv = false;
+    }
+    
+    /**
+     * Vérifie les licences en mode production (AppSource)
+     * Cette méthode doit être appelée uniquement après publication sur AppSource
+     */
+    private checkLicenseInProduction() {
         // 🧪 MODE TEST : Décommentez les lignes suivantes pour simuler un environnement sans licence
         // this.isLicenseUnsupportedEnv = true;
         // this.notifyLicenseStatus();
