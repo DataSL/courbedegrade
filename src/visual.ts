@@ -116,7 +116,7 @@ export class Visual implements IVisual {
     private checkLicense() {
         // 🧪 MODE TEST : Décommentez la ligne suivante pour simuler une licence invalide
         // this.isLicenseValid = false;
-        // this.licenseCheckMessage.textContent = "⚠️ [MODE TEST] Licence non valide simulée";
+        // this.licenseCheckMessage.textContent = "⚠️ [MODE TEST] Licence non valide simulée - Réservé aux licences Power BI Pro/Premium";
         // this.licenseCheckMessage.style.display = "block";
         // return;
         
