@@ -6,6 +6,11 @@ import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import ISelectionId = powerbi.visuals.ISelectionId;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
+import IVisualLicenseManager = powerbi.extensibility.IVisualLicenseManager;
+import LicenseInfoResult = powerbi.extensibility.visual.LicenseInfoResult;
+import ServicePlan = powerbi.extensibility.visual.ServicePlan;
+import ServicePlanState = powerbi.ServicePlanState;
+import LicenseNotificationType = powerbi.LicenseNotificationType;
 
 import { VisualFormattingSettingsModel } from "./settings";
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
@@ -32,9 +37,13 @@ export class Visual implements IVisual {
     private selectionManager: ISelectionManager;
     private dataView: powerbi.DataView;
     
-    // Licensing
-    private isLicenseValid: boolean = false;
-    private licenseCheckMessage: HTMLDivElement;
+    // Licensing avec l'API officielle Microsoft Power BI
+    private licenseManager: IVisualLicenseManager;
+    private currentUserValidPlans: ServicePlan[] | undefined;
+    private hasServicePlans: boolean | undefined;
+    private isLicenseUnsupportedEnv: boolean | undefined;
+    private isNotificationDisplayed: boolean = false;
+    private defaultNotificationType: LicenseNotificationType = LicenseNotificationType.General;
 
     constructor(options: VisualConstructorOptions) {
         this.target = options.element;
@@ -94,74 +103,158 @@ export class Visual implements IVisual {
             this.selectionManager.clear();
         });
         
-        // Message de licence
-        this.licenseCheckMessage = document.createElement("div");
-        this.licenseCheckMessage.style.position = "absolute";
-        this.licenseCheckMessage.style.top = "10px";
-        this.licenseCheckMessage.style.left = "10px";
-        this.licenseCheckMessage.style.padding = "10px";
-        this.licenseCheckMessage.style.background = "#fff3cd";
-        this.licenseCheckMessage.style.border = "1px solid #ffc107";
-        this.licenseCheckMessage.style.borderRadius = "4px";
-        this.licenseCheckMessage.style.color = "#856404";
-        this.licenseCheckMessage.style.fontSize = "12px";
-        this.licenseCheckMessage.style.display = "none";
-        this.licenseCheckMessage.style.zIndex = "1001";
-        this.target.appendChild(this.licenseCheckMessage);
+        // Initialiser le gestionnaire de licences (API officielle Microsoft Power BI)
+        this.licenseManager = this.host.licenseManager;
         
-        // Vérifier la licence
-        this.checkLicense();
+        // Récupérer les plans de service de licence
+        this.retrieveLicenseInfo();
     }
     
-    private checkLicense() {
-        // 🧪 MODE TEST : Décommentez la ligne suivante pour simuler une licence invalide
-        // this.isLicenseValid = false;
-        // this.licenseCheckMessage.textContent = "⚠️ [MODE TEST] Licence non valide simulée - Réservé aux licences Power BI Pro/Premium";
-        // this.licenseCheckMessage.style.display = "block";
+    /**
+     * Récupère les informations de licence de l'utilisateur via l'API officielle Power BI
+     * Utilise getAvailableServicePlans() pour obtenir les plans de service
+     */
+    private retrieveLicenseInfo() {
+        // 🧪 MODE TEST : Décommentez les lignes suivantes pour simuler un environnement sans licence
+        // this.isLicenseUnsupportedEnv = true;
+        // this.notifyLicenseStatus();
         // return;
         
-        try {
-            // Vérifier si on a accès aux privilèges via l'interface étendue
-            const hostWithPrivileges = this.host as any;
-            
-            if (hostWithPrivileges.getPrivileges) {
-                const privileges = hostWithPrivileges.getPrivileges();
-                
-                console.log("🔑 Privilèges détectés:", privileges); // Pour debug
-                
-                // Vérifier si WebAccess est accordé
-                if (privileges && privileges.indexOf('WebAccess') !== -1) {
-                    this.isLicenseValid = true;
-                    this.licenseCheckMessage.style.display = "none";
-                    console.log("✅ Licence valide - WebAccess accordé");
-                } else {
-                    this.isLicenseValid = false;
-                    this.licenseCheckMessage.textContent = "⚠️ Licence non valide : Ce visuel nécessite une licence Power BI appropriée.";
-                    this.licenseCheckMessage.style.display = "block";
-                    console.warn("⚠️ Licence invalide - WebAccess non accordé");
-                }
-            } else {
-                // Si getPrivileges n'est pas disponible, vérifier l'environnement
-                // En production Power BI Service, on peut vérifier d'autres propriétés
-                console.log("ℹ️ getPrivileges() non disponible - mode Desktop/Dev");
-                const hostCapabilities = this.host.createSelectionIdBuilder ? true : false;
-                this.isLicenseValid = hostCapabilities;
-                
-                if (!this.isLicenseValid) {
-                    this.licenseCheckMessage.textContent = "⚠️ Environnement non supporté ou licence non valide.";
-                    this.licenseCheckMessage.style.display = "block";
-                    console.warn("⚠️ Licence invalide - Environnement non supporté");
-                } else {
-                    this.licenseCheckMessage.style.display = "none";
-                    console.log("✅ Licence valide - Mode Desktop/Dev");
-                }
-            }
-        } catch (error) {
-            // En cas d'erreur, considérer que la licence est valide (mode développement)
-            console.log("🔧 Erreur vérification licence (mode développement):", error);
-            this.isLicenseValid = true;
-            this.licenseCheckMessage.style.display = "none";
+        // 🧪 MODE TEST : Décommentez les lignes suivantes pour simuler une licence manquante
+        // this.hasServicePlans = false;
+        // this.isLicenseUnsupportedEnv = false;
+        // this.notifyLicenseStatus();
+        // return;
+        
+        if (!this.licenseManager) {
+            console.log("ℹ️ Gestionnaire de licences non disponible - mode Desktop/Dev");
+            // En mode développement, considérer que la licence est valide
+            this.hasServicePlans = true;
+            this.isLicenseUnsupportedEnv = false;
+            return;
         }
+        
+        // Récupérer les plans de service disponibles pour cet utilisateur
+        this.licenseManager.getAvailableServicePlans()
+            .then((result: LicenseInfoResult) => {
+                const { plans, isLicenseUnsupportedEnv, isLicenseInfoAvailable } = result;
+                
+                console.log("🔑 Informations de licence récupérées:", {
+                    plans,
+                    isLicenseUnsupportedEnv,
+                    isLicenseInfoAvailable
+                });
+                
+                if (isLicenseInfoAvailable && !isLicenseUnsupportedEnv) {
+                    // Filtrer uniquement les plans actifs ou en avertissement
+                    this.currentUserValidPlans = plans?.filter(({ state }) => 
+                        state === ServicePlanState.Active || state === ServicePlanState.Warning
+                    );
+                    this.hasServicePlans = !!this.currentUserValidPlans?.length;
+                    
+                    if (this.hasServicePlans) {
+                        console.log(`✅ ${this.currentUserValidPlans.length} plan(s) de service valide(s) trouvé(s)`);
+                    } else {
+                        console.warn("⚠️ Aucun plan de service valide trouvé");
+                    }
+                }
+                
+                this.isLicenseUnsupportedEnv = isLicenseUnsupportedEnv;
+                
+                // Afficher les notifications appropriées
+                this.notifyLicenseStatus();
+            })
+            .catch((error) => {
+                console.error("❌ Erreur lors de la récupération des licences:", error);
+                // En cas d'erreur, ne pas bloquer le visuel en mode dev
+                this.currentUserValidPlans = undefined;
+                this.hasServicePlans = undefined;
+            });
+    }
+    
+    /**
+     * Affiche les notifications de licence appropriées selon le statut
+     */
+    private notifyLicenseStatus() {
+        // Effacer toute notification précédente
+        if (this.licenseManager) {
+            this.licenseManager.clearLicenseNotification()
+                .catch((err) => console.log("Erreur lors du nettoyage des notifications:", err));
+        }
+        
+        // Si l'environnement ne supporte pas les licences
+        if (this.isLicenseUnsupportedEnv) {
+            this.showUnsupportedEnvNotification();
+            return;
+        }
+        
+        // Si aucun plan de service valide n'est trouvé
+        if (this.hasServicePlans === false) {
+            this.showLicenseRequiredNotification();
+            return;
+        }
+        
+        // Si on a des plans valides, ne rien afficher
+        if (this.hasServicePlans === true) {
+            this.isNotificationDisplayed = false;
+            console.log("✅ Licence valide - Visuel fonctionnel");
+        }
+    }
+    
+    /**
+     * Affiche la notification pour environnement non supporté
+     */
+    private showUnsupportedEnvNotification() {
+        if (!this.licenseManager || this.isNotificationDisplayed) return;
+        
+        this.licenseManager.notifyLicenseRequired(LicenseNotificationType.UnsupportedEnv)
+            .then((displayed) => {
+                this.isNotificationDisplayed = displayed;
+                if (displayed) {
+                    console.log("📢 Notification affichée : Environnement non supporté");
+                }
+            })
+            .catch((err) => console.error("Erreur lors de l'affichage de la notification:", err));
+    }
+    
+    /**
+     * Affiche la notification pour licence requise
+     * Peut utiliser General (icône) ou VisualIsBlocked (overlay complet)
+     */
+    private showLicenseRequiredNotification() {
+        if (!this.licenseManager || this.isNotificationDisplayed) return;
+        
+        // Utiliser VisualIsBlocked pour bloquer complètement le visuel
+        // Ou utiliser General pour afficher uniquement une icône
+        const notificationType = LicenseNotificationType.VisualIsBlocked;
+        
+        this.licenseManager.notifyLicenseRequired(notificationType)
+            .then((displayed) => {
+                this.isNotificationDisplayed = displayed;
+                if (displayed) {
+                    console.log("📢 Notification affichée : Licence requise");
+                }
+            })
+            .catch((err) => console.error("Erreur lors de l'affichage de la notification:", err));
+    }
+    
+    /**
+     * Affiche une notification pour une fonctionnalité bloquée
+     * @param featureName Nom de la fonctionnalité bloquée
+     */
+    private notifyFeatureBlocked(featureName: string) {
+        if (!this.licenseManager) return;
+        
+        // Créer un message d'info-bulle personnalisé
+        const tooltip = `La fonctionnalité "${featureName}" nécessite une licence valide.`;
+        
+        this.licenseManager.notifyFeatureBlocked(tooltip)
+            .then((displayed) => {
+                if (displayed) {
+                    console.log(`📢 Fonctionnalité bloquée : ${featureName}`);
+                }
+            })
+            .catch((err) => console.error("Erreur lors de l'affichage de la notification:", err));
     }
 
     private showTooltip(x: number, y: number, content: string) {
@@ -234,11 +327,9 @@ export class Visual implements IVisual {
     public update(options: VisualUpdateOptions) {
         const ns = "http://www.w3.org/2000/svg";
         
-        // Vérifier la licence avant de continuer
-        this.checkLicense();
-        
-        // Si la licence n'est pas valide, afficher un message et arrêter
-        if (!this.isLicenseValid) {
+        // Vérifier le statut de la licence
+        // Si aucun plan de service valide, le système de notification Power BI gère l'affichage
+        if (this.hasServicePlans === false || this.isLicenseUnsupportedEnv === true) {
             // Nettoyer le visuel
             while (this.axisGroup.firstChild) this.axisGroup.removeChild(this.axisGroup.firstChild);
             while (this.linesGroup.firstChild) this.linesGroup.removeChild(this.linesGroup.firstChild);
@@ -246,16 +337,8 @@ export class Visual implements IVisual {
             this.svg.setAttribute("width", options.viewport.width.toString());
             this.svg.setAttribute("height", options.viewport.height.toString());
             
-            // Créer un message au centre
-            const centerMessage = document.createElementNS(ns, "text");
-            centerMessage.setAttribute("x", (options.viewport.width / 2).toString());
-            centerMessage.setAttribute("y", (options.viewport.height / 2).toString());
-            centerMessage.setAttribute("text-anchor", "middle");
-            centerMessage.setAttribute("fill", "#856404");
-            centerMessage.setAttribute("font-size", "14px");
-            centerMessage.textContent = "Licence Power BI requise";
-            this.axisGroup.appendChild(centerMessage);
-            
+            // Les notifications sont gérées par le système Power BI via notifyLicenseRequired()
+            // Pas besoin d'afficher de message personnalisé ici
             return;
         }
         

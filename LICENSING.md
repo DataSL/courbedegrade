@@ -1,169 +1,469 @@
-# Système de Licensing Power BI
+# Système de Licensing Power BI - API Officielle Microsoft
 
-Ce visuel personnalisé intègre un système de licensing Power BI qui permet de contrôler l'accès et l'utilisation du visuel selon les licences disponibles.
+Ce visuel personnalisé utilise l'**API officielle de gestion des licences Power BI** pour contrôler l'accès et l'utilisation du visuel selon les licences achetées via AppSource ou le système de commerce Microsoft.
 
-## Fonctionnalités
+## 🎯 Vue d'ensemble
 
-### 1. Vérification des Privilèges
-Le visuel vérifie automatiquement les privilèges Power BI à chaque chargement et mise à jour :
-- **WebAccess** : Privilège requis pour le fonctionnement complet du visuel
-- Détection automatique de l'environnement (développement vs production)
+Le système de licensing permet de :
+- ✅ Gérer les licences via le Centre d'administration Microsoft 365
+- ✅ Vérifier automatiquement les plans de service de l'utilisateur
+- ✅ Afficher des notifications natives Power BI
+- ✅ Bloquer l'accès aux fonctionnalités sans licence
+- ✅ Supporter les environnements multiples (Desktop, Service, Embedded)
 
-### 2. Messages d'Avertissement
-- Si la licence n'est pas valide, un message d'avertissement s'affiche en haut à gauche du visuel
-- Le visuel affiche également un message centré indiquant que la licence est requise
-- En mode développement, le visuel fonctionne normalement sans licence
+## 📚 Architecture du Système
 
-### 3. Configuration dans capabilities.json
+### 1. API de Gestion des Licences (`IVisualLicenseManager`)
 
-Le système de licensing est configuré dans le fichier `capabilities.json` :
-
-```json
-"privileges": [
-  {
-    "name": "WebAccess",
-    "essential": true,
-    "parameters": ["*"]
-  }
-]
-```
-
-#### Paramètres :
-- **name** : Le nom du privilège requis (`WebAccess`)
-- **essential** : Indique si le privilège est essentiel au fonctionnement
-- **parameters** : Domaines ou ressources accessibles (ici `["*"]` pour tout)
-
-### 4. Comportement du Visuel
-
-#### Avec Licence Valide :
-- Le visuel fonctionne normalement
-- Toutes les fonctionnalités sont disponibles
-- Aucun message d'avertissement
-
-#### Sans Licence Valide :
-- Le visuel se nettoie automatiquement
-- Un message d'avertissement jaune s'affiche en haut à gauche
-- Un message centré indique "Licence Power BI requise"
-- Les données ne sont pas affichées
-
-#### En Mode Développement :
-- Le visuel fonctionne normalement
-- Les erreurs de vérification de licence sont loguées dans la console
-- Permet de développer et tester sans contraintes
-
-## Types de Privilèges Power BI
-
-Voici les privilèges disponibles que vous pouvez utiliser :
-
-1. **WebAccess** : Accès aux ressources web externes
-2. **ExportContent** : Exportation de contenu
-3. **CreateDataflow** : Création de flux de données
-4. **ViewDataflow** : Visualisation des flux de données
-5. **ShareDashboard** : Partage de tableaux de bord
-
-## Personnalisation
-
-### Modifier les Privilèges Requis
-
-Pour ajouter ou modifier les privilèges, éditez le fichier `capabilities.json` :
-
-```json
-"privileges": [
-  {
-    "name": "WebAccess",
-    "essential": true,
-    "parameters": ["*.votredomaine.com"]
-  },
-  {
-    "name": "ExportContent",
-    "essential": false,
-    "parameters": []
-  }
-]
-```
-
-### Personnaliser les Messages
-
-Dans le fichier `visual.ts`, vous pouvez modifier les messages d'avertissement :
+Le visuel utilise l'API `IVisualLicenseManager` fournie par Power BI (disponible depuis la version 4.7+).
 
 ```typescript
-// Ligne ~135 - Message d'avertissement principal
-this.licenseCheckMessage.textContent = "⚠️ Votre message personnalisé";
-
-// Ligne ~222 - Message centré
-centerMessage.textContent = "Votre message personnalisé";
+private licenseManager: IVisualLicenseManager;
+private currentUserValidPlans: ServicePlan[] | undefined;
+private hasServicePlans: boolean | undefined;
+private isLicenseUnsupportedEnv: boolean | undefined;
 ```
 
-### Désactiver la Vérification de Licence
+### 2. Récupération des Licences
 
-Pour désactiver temporairement la vérification (développement uniquement) :
+La méthode `getAvailableServicePlans()` récupère les informations de licence :
 
 ```typescript
-// Dans la méthode checkLicense(), ligne ~115
-private checkLicense() {
-    this.isLicenseValid = true;  // Forcer à true
-    this.licenseCheckMessage.style.display = "none";
-    return;  // Sortir immédiatement
+this.licenseManager.getAvailableServicePlans()
+    .then((result: LicenseInfoResult) => {
+        const { plans, isLicenseUnsupportedEnv, isLicenseInfoAvailable } = result;
+        // Traitement des plans...
+    });
+```
+
+#### Structure de `LicenseInfoResult`
+
+- **`plans`** : Tableau des plans de service achetés pour ce visuel
+- **`isLicenseUnsupportedEnv`** : Indique si l'environnement supporte les licences
+- **`isLicenseInfoAvailable`** : Indique si les informations sont disponibles
+
+#### Structure de `ServicePlan`
+
+- **`spIdentifier`** : ID du service (généré dans Partner Center)
+- **`state`** : État du plan (`Active`, `Warning`, `Suspended`, `Inactive`, `Unknown`)
+
+### 3. États des Plans de Service
+
+| État | Description | Utilisable |
+|------|-------------|-----------|
+| **Active** | Licence active et utilisable | ✅ Oui |
+| **Warning** | Période de grâce (problème de paiement) | ✅ Oui |
+| **Suspended** | Licence suspendue | ❌ Non |
+| **Inactive** | Licence inactive | ❌ Non |
+| **Unknown** | État inconnu | ❌ Non |
+
+## 🔔 Système de Notifications
+
+Le visuel utilise les notifications natives Power BI au lieu de messages personnalisés.
+
+### Types de Notifications
+
+#### 1. Icône Générale (`LicenseNotificationType.General`)
+
+Affiche une petite icône dans le coin du visuel :
+
+```typescript
+this.licenseManager.notifyLicenseRequired(LicenseNotificationType.General)
+```
+
+**Usage** : Pour informer l'utilisateur sans bloquer le visuel
+**Contexte** : Mode modification uniquement
+
+#### 2. Visuel Bloqué (`LicenseNotificationType.VisualIsBlocked`)
+
+Overlay complet qui bloque le visuel avec un message :
+
+```typescript
+this.licenseManager.notifyLicenseRequired(LicenseNotificationType.VisualIsBlocked)
+```
+
+**Usage** : Pour bloquer complètement l'accès au visuel
+**Affiche** : Bouton "Obtenir une licence" et "En savoir plus"
+
+#### 3. Environnement Non Supporté (`LicenseNotificationType.UnsupportedEnv`)
+
+Indique que l'environnement ne supporte pas les licences :
+
+```typescript
+this.licenseManager.notifyLicenseRequired(LicenseNotificationType.UnsupportedEnv)
+```
+
+**Environnements non supportés** :
+- Publier sur le web
+- Incorporation PaaS (Embedded)
+- Clouds nationaux/régionaux
+- Power BI Report Server
+- Export PDF/PPT via API REST
+
+#### 4. Fonctionnalité Bloquée (`notifyFeatureBlocked`)
+
+Bannière contextuelle pour une fonctionnalité spécifique :
+
+```typescript
+this.licenseManager.notifyFeatureBlocked("Nom de la fonctionnalité")
+```
+
+**Usage** : Bloquer une fonctionnalité spécifique tout en laissant le visuel fonctionnel
+**Durée** : 10 secondes ou jusqu'à nouvelle notification
+
+## 🔧 Implémentation dans le Code
+
+### Initialisation (Constructor)
+
+```typescript
+constructor(options: VisualConstructorOptions) {
+    // ... autres initialisations
     
-    // ... reste du code
+    // Initialiser le gestionnaire de licences
+    this.licenseManager = this.host.licenseManager;
+    
+    // Récupérer les informations de licence
+    this.retrieveLicenseInfo();
 }
 ```
 
-## Déploiement
+### Récupération des Licences
 
-Lors du déploiement du visuel sur Power BI Service :
+```typescript
+private retrieveLicenseInfo() {
+    if (!this.licenseManager) {
+        // Mode développement : licence valide par défaut
+        this.hasServicePlans = true;
+        return;
+    }
+    
+    this.licenseManager.getAvailableServicePlans()
+        .then((result: LicenseInfoResult) => {
+            // Filtrer les plans actifs ou en avertissement
+            this.currentUserValidPlans = result.plans?.filter(({ state }) => 
+                state === ServicePlanState.Active || 
+                state === ServicePlanState.Warning
+            );
+            
+            this.hasServicePlans = !!this.currentUserValidPlans?.length;
+            this.isLicenseUnsupportedEnv = result.isLicenseUnsupportedEnv;
+            
+            // Afficher les notifications appropriées
+            this.notifyLicenseStatus();
+        });
+}
+```
 
-1. **Assurez-vous que les privilèges sont correctement configurés** dans `capabilities.json`
-2. **Testez le visuel** avec différents types de licences Power BI
-3. **Vérifiez les messages** d'avertissement dans différents environnements
-4. **Documentez les exigences** de licence pour les utilisateurs finaux
+### Gestion des Notifications
 
-## Environnements Power BI
+```typescript
+private notifyLicenseStatus() {
+    // Effacer les notifications précédentes
+    this.licenseManager.clearLicenseNotification();
+    
+    if (this.isLicenseUnsupportedEnv) {
+        this.showUnsupportedEnvNotification();
+        return;
+    }
+    
+    if (this.hasServicePlans === false) {
+        this.showLicenseRequiredNotification();
+        return;
+    }
+}
+```
+
+### Vérification dans `update()`
+
+```typescript
+public update(options: VisualUpdateOptions) {
+    // Bloquer le rendu si pas de licence valide
+    if (this.hasServicePlans === false || this.isLicenseUnsupportedEnv === true) {
+        // Nettoyer le visuel
+        // Les notifications Power BI sont déjà affichées
+        return;
+    }
+    
+    // Continuer le rendu normal...
+}
+```
+
+## 🧪 Mode Test
+
+### Tester sans Licence
+
+Décommentez dans `retrieveLicenseInfo()` :
+
+```typescript
+// Simuler une licence manquante
+this.hasServicePlans = false;
+this.isLicenseUnsupportedEnv = false;
+this.notifyLicenseStatus();
+return;
+```
+
+### Tester Environnement Non Supporté
+
+```typescript
+// Simuler un environnement non supporté
+this.isLicenseUnsupportedEnv = true;
+this.notifyLicenseStatus();
+return;
+```
+
+### Tester une Fonctionnalité Bloquée
+
+```typescript
+// Dans update() ou une méthode spécifique
+if (!this.hasSpecificFeatureLicense()) {
+    this.notifyFeatureBlocked("Export avancé");
+}
+```
+
+## 📦 Configuration AppSource
+
+### 1. Configuration Partner Center
+
+Lorsque vous créez votre offre dans l'Espace partenaires :
+
+1. **Choisir la transaction via Microsoft** : Activez la gestion des licences par Microsoft
+2. **Définir les plans** : Créez des plans tarifaires (Gratuit, Pro, Premium, etc.)
+3. **Générer les identifiants** : Notez les `spIdentifier` pour chaque plan
+4. **Configurer la disponibilité** : Définissez les marchés et la visibilité
+
+### 2. Identifiants de Plan (spIdentifier)
+
+Chaque plan génère un identifiant unique dans Partner Center :
+
+Exemple : `courbedegrade-pro-monthly-v1`
+
+Utilisez ces identifiants pour vérifier les licences spécifiques :
+
+```typescript
+const hasProLicense = this.currentUserValidPlans?.some(
+    plan => plan.spIdentifier === "courbedegrade-pro-monthly-v1"
+);
+```
+
+### 3. Gestion Multi-Plans
+
+Pour supporter plusieurs plans (Gratuit, Pro, Premium) :
+
+```typescript
+private checkFeatureAccess(feature: string): boolean {
+    const proFeatures = ["export", "advanced-styling"];
+    const premiumFeatures = ["real-time-data", "api-access"];
+    
+    if (premiumFeatures.includes(feature)) {
+        return this.hasPremiumLicense();
+    }
+    
+    if (proFeatures.includes(feature)) {
+        return this.hasProOrPremiumLicense();
+    }
+    
+    return true; // Fonctionnalité gratuite
+}
+```
+
+## 🌐 Environnements Power BI
 
 ### Power BI Desktop
-- Mode développement : Licence toujours valide
-- Les privilèges peuvent ne pas être vérifiés
 
-### Power BI Service
-- Vérification complète des privilèges
-- Restrictions basées sur les licences utilisateur :
-  - **Free** : Fonctionnalités limitées
-  - **Pro** : Fonctionnalités complètes
-  - **Premium** : Toutes les fonctionnalités + capacités étendues
+- **Vérification** : Limitée (mode développement)
+- **Comportement** : `licenseManager` peut être `undefined`
+- **Recommandation** : Considérer comme valide pour le développement
+
+### Power BI Service (Web)
+
+- **Vérification** : Complète via API
+- **Licences** : Free, Pro, Premium par utilisateur
+- **Gestion** : Centre d'administration Microsoft 365
 
 ### Power BI Embedded
-- Vérification basée sur la capacité
-- Privilèges configurés au niveau de l'application
 
-## Dépannage
+- **Vérification** : Basée sur la capacité
+- **Configuration** : Au niveau de l'application
+- **Support** : Dépend de la version de l'API
 
-### Le message de licence s'affiche en mode développement
+### Environnements Non Supportés
 
-**Cause** : La méthode `getPrivileges()` n'est pas disponible
-**Solution** : C'est normal, le code détecte automatiquement le mode développement et permet le fonctionnement
+Les environnements suivants retournent `isLicenseUnsupportedEnv = true` :
 
-### Le visuel ne fonctionne pas en production
+- 📤 Publier sur le web
+- 🔗 Incorporation PaaS (sans authentification)
+- 🌍 Clouds nationaux (selon disponibilité)
+- 💾 Power BI Report Server
+- 📄 Export PDF/PPT via REST API
 
-**Cause** : Privilèges non accordés ou licence insuffisante
-**Solution** : 
-1. Vérifiez que l'utilisateur a une licence appropriée
-2. Vérifiez que les privilèges dans `capabilities.json` sont corrects
-3. Consultez les logs de la console Power BI
+## 📊 Expérience Utilisateur
 
-### Erreur "Property 'getPrivileges' does not exist"
+### Avec Licence Valide
 
-**Cause** : Version de l'API Power BI ne supporte pas cette méthode
-**Solution** : Le code utilise déjà un cast vers `any` pour gérer ce cas
+✅ Le visuel fonctionne normalement
+✅ Toutes les fonctionnalités sont accessibles
+✅ Aucune notification affichée
 
-## Ressources
+### Sans Licence (Mode Général)
 
-- [Documentation Power BI Visuals](https://learn.microsoft.com/en-us/power-bi/developer/visuals/)
-- [API Reference](https://learn.microsoft.com/en-us/javascript/api/overview/powerbi/)
-- [Licensing in Power BI](https://learn.microsoft.com/en-us/power-bi/enterprise/service-admin-licensing-organization)
+⚠️ Icône d'avertissement dans le coin
+ℹ️ Info-bulle explicative au survol
+🔓 Visuel partiellement fonctionnel
 
-## Support
+### Sans Licence (Mode Bloqué)
 
-Pour toute question concernant le licensing :
-1. Consultez la documentation Power BI
-2. Vérifiez les logs de la console du navigateur
-3. Testez dans différents environnements (Desktop, Service, Embedded)
+🚫 Overlay complet sur le visuel
+📝 Message "Licence requise pour afficher ce visuel"
+🛒 Bouton "Obtenir une licence" → AppSource
+ℹ️ Lien "En savoir plus"
+
+### Fonctionnalité Spécifique Bloquée
+
+📢 Bannière contextuelle (10 secondes)
+💬 Message personnalisé : "La fonctionnalité X nécessite une licence"
+✅ Reste du visuel fonctionnel
+
+## 🔐 Meilleures Pratiques
+
+### 1. Récupération des Licences
+
+✅ **À FAIRE** :
+- Récupérer les licences dans le `constructor` ou `init`
+- Mettre en cache les résultats (Power BI les met déjà en cache)
+- Gérer les erreurs gracieusement
+
+❌ **À ÉVITER** :
+- Appeler `getAvailableServicePlans()` dans `update()` (performance)
+- Bloquer l'UI en attendant la réponse
+- Faire des appels répétés
+
+### 2. Notifications
+
+✅ **À FAIRE** :
+- Utiliser les notifications natives Power BI
+- Appeler `clearLicenseNotification()` avant de changer de type
+- Fournir des messages clairs et actionnables
+
+❌ **À ÉVITER** :
+- Créer des overlays HTML personnalisés
+- Afficher plusieurs notifications simultanément
+- Messages vagues ou techniques
+
+### 3. Mode Développement
+
+✅ **À FAIRE** :
+- Vérifier si `licenseManager` existe
+- Permettre le fonctionnement en mode dev
+- Logger les informations de debug
+
+❌ **À ÉVITER** :
+- Bloquer le développement sans licence
+- Crash si l'API n'est pas disponible
+
+### 4. Localisation
+
+✅ **À FAIRE** :
+- Utiliser l'API de localisation Power BI
+- Supporter les tooltips multilingues
+- Tester dans différentes langues
+
+```typescript
+const locale = this.host.locale;
+const tooltip = this.getLocalizedTooltip(locale, featureName);
+this.licenseManager.notifyFeatureBlocked(tooltip);
+```
+
+## 🐛 Dépannage
+
+### Problème : `licenseManager` est `undefined`
+
+**Causes** :
+- Mode Power BI Desktop
+- Version API < 4.7
+- Environnement non supporté
+
+**Solutions** :
+```typescript
+if (!this.licenseManager) {
+    console.log("Gestionnaire de licences non disponible");
+    this.hasServicePlans = true; // Mode dev
+    return;
+}
+```
+
+### Problème : Notifications ne s'affichent pas
+
+**Causes** :
+- Environnement non supporté
+- Mode lecture (pas mode édition)
+- Notification déjà affichée
+
+**Solutions** :
+- Vérifier `isLicenseUnsupportedEnv`
+- Tester en mode édition
+- Appeler `clearLicenseNotification()` d'abord
+
+### Problème : Plans de service vides
+
+**Causes** :
+- Utilisateur non connecté (Desktop)
+- Pas de connexion Internet
+- Aucune licence achetée
+
+**Solutions** :
+```typescript
+.then((result) => {
+    if (!result.isLicenseInfoAvailable) {
+        console.warn("Impossible de récupérer les licences");
+        // Gérer le cas offline
+    }
+});
+```
+
+## 📈 Rapports et Analyse
+
+Dans l'Espace partenaires, vous pouvez consulter :
+
+- 💰 **Revenus** : Revenus par plan et période
+- 📊 **Licences** : Licences actives, renouvelées, annulées
+- 🌍 **Géographie** : Répartition par pays/région
+- 👥 **Clients** : Organisations utilisatrices
+- 📅 **Tendances** : Évolution dans le temps
+
+## 🔗 Ressources
+
+- [Documentation API Licensing Power BI](https://learn.microsoft.com/en-us/power-bi/developer/visuals/licensing-api)
+- [Espace partenaires Microsoft](https://partner.microsoft.com/)
+- [AppSource](https://appsource.microsoft.com/)
+- [API Power BI Visuals](https://learn.microsoft.com/en-us/javascript/api/overview/powerbi/)
+- [Centre d'administration Microsoft 365](https://admin.microsoft.com/)
+
+## 📝 Notes de Version
+
+### Version Actuelle
+
+- ✅ API officielle Microsoft Power BI
+- ✅ Support de `getAvailableServicePlans()`
+- ✅ Notifications natives Power BI
+- ✅ Gestion des environnements non supportés
+- ✅ Mode test intégré
+
+### Anciennes Versions (Dépréciées)
+
+- ❌ Système de privilèges (`privileges` dans `capabilities.json`)
+- ❌ Messages HTML personnalisés
+- ❌ Vérification manuelle avec `getPrivileges()`
+
+## 💡 Exemple Complet
+
+Voir le code source dans [visual.ts](src/visual.ts) pour l'implémentation complète avec :
+
+- Récupération des licences
+- Gestion des notifications
+- Vérification dans `update()`
+- Mode test et debug
+- Gestion des erreurs
+
+---
+
+**Important** : Ce système nécessite Power BI API version 4.7+ et est conçu pour les visuels distribués via AppSource avec transaction via Microsoft.

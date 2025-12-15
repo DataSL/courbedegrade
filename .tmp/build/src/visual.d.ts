@@ -16,10 +16,36 @@ export declare class Visual implements IVisual {
     private host;
     private selectionManager;
     private dataView;
-    private isLicenseValid;
-    private licenseCheckMessage;
+    private licenseManager;
+    private currentUserValidPlans;
+    private hasServicePlans;
+    private isLicenseUnsupportedEnv;
+    private isNotificationDisplayed;
+    private defaultNotificationType;
     constructor(options: VisualConstructorOptions);
-    private checkLicense;
+    /**
+     * Récupère les informations de licence de l'utilisateur via l'API officielle Power BI
+     * Utilise getAvailableServicePlans() pour obtenir les plans de service
+     */
+    private retrieveLicenseInfo;
+    /**
+     * Affiche les notifications de licence appropriées selon le statut
+     */
+    private notifyLicenseStatus;
+    /**
+     * Affiche la notification pour environnement non supporté
+     */
+    private showUnsupportedEnvNotification;
+    /**
+     * Affiche la notification pour licence requise
+     * Peut utiliser General (icône) ou VisualIsBlocked (overlay complet)
+     */
+    private showLicenseRequiredNotification;
+    /**
+     * Affiche une notification pour une fonctionnalité bloquée
+     * @param featureName Nom de la fonctionnalité bloquée
+     */
+    private notifyFeatureBlocked;
     private showTooltip;
     private hideTooltip;
     private getNiceStep;
