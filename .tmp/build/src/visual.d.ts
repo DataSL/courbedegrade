@@ -16,7 +16,10 @@ export declare class Visual implements IVisual {
     private host;
     private selectionManager;
     private dataView;
+    private isLicenseValid;
+    private licenseCheckMessage;
     constructor(options: VisualConstructorOptions);
+    private checkLicense;
     private showTooltip;
     private hideTooltip;
     private getNiceStep;

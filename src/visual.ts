@@ -31,6 +31,10 @@ export class Visual implements IVisual {
     private host: powerbi.extensibility.visual.IVisualHost;
     private selectionManager: ISelectionManager;
     private dataView: powerbi.DataView;
+    
+    // Licensing
+    private isLicenseValid: boolean = false;
+    private licenseCheckMessage: HTMLDivElement;
 
     constructor(options: VisualConstructorOptions) {
         this.target = options.element;
@@ -89,6 +93,75 @@ export class Visual implements IVisual {
         this.svg.addEventListener('click', () => {
             this.selectionManager.clear();
         });
+        
+        // Message de licence
+        this.licenseCheckMessage = document.createElement("div");
+        this.licenseCheckMessage.style.position = "absolute";
+        this.licenseCheckMessage.style.top = "10px";
+        this.licenseCheckMessage.style.left = "10px";
+        this.licenseCheckMessage.style.padding = "10px";
+        this.licenseCheckMessage.style.background = "#fff3cd";
+        this.licenseCheckMessage.style.border = "1px solid #ffc107";
+        this.licenseCheckMessage.style.borderRadius = "4px";
+        this.licenseCheckMessage.style.color = "#856404";
+        this.licenseCheckMessage.style.fontSize = "12px";
+        this.licenseCheckMessage.style.display = "none";
+        this.licenseCheckMessage.style.zIndex = "1001";
+        this.target.appendChild(this.licenseCheckMessage);
+        
+        // Vérifier la licence
+        this.checkLicense();
+    }
+    
+    private checkLicense() {
+        // 🧪 MODE TEST : Décommentez la ligne suivante pour simuler une licence invalide
+        // this.isLicenseValid = false;
+        // this.licenseCheckMessage.textContent = "⚠️ [MODE TEST] Licence non valide simulée";
+        // this.licenseCheckMessage.style.display = "block";
+        // return;
+        
+        try {
+            // Vérifier si on a accès aux privilèges via l'interface étendue
+            const hostWithPrivileges = this.host as any;
+            
+            if (hostWithPrivileges.getPrivileges) {
+                const privileges = hostWithPrivileges.getPrivileges();
+                
+                console.log("🔑 Privilèges détectés:", privileges); // Pour debug
+                
+                // Vérifier si WebAccess est accordé
+                if (privileges && privileges.indexOf('WebAccess') !== -1) {
+                    this.isLicenseValid = true;
+                    this.licenseCheckMessage.style.display = "none";
+                    console.log("✅ Licence valide - WebAccess accordé");
+                } else {
+                    this.isLicenseValid = false;
+                    this.licenseCheckMessage.textContent = "⚠️ Licence non valide : Ce visuel nécessite une licence Power BI appropriée.";
+                    this.licenseCheckMessage.style.display = "block";
+                    console.warn("⚠️ Licence invalide - WebAccess non accordé");
+                }
+            } else {
+                // Si getPrivileges n'est pas disponible, vérifier l'environnement
+                // En production Power BI Service, on peut vérifier d'autres propriétés
+                console.log("ℹ️ getPrivileges() non disponible - mode Desktop/Dev");
+                const hostCapabilities = this.host.createSelectionIdBuilder ? true : false;
+                this.isLicenseValid = hostCapabilities;
+                
+                if (!this.isLicenseValid) {
+                    this.licenseCheckMessage.textContent = "⚠️ Environnement non supporté ou licence non valide.";
+                    this.licenseCheckMessage.style.display = "block";
+                    console.warn("⚠️ Licence invalide - Environnement non supporté");
+                } else {
+                    this.licenseCheckMessage.style.display = "none";
+                    console.log("✅ Licence valide - Mode Desktop/Dev");
+                }
+            }
+        } catch (error) {
+            // En cas d'erreur, considérer que la licence est valide (mode développement)
+            console.log("🔧 Erreur vérification licence (mode développement):", error);
+            this.isLicenseValid = true;
+            this.licenseCheckMessage.style.display = "none";
+        }
     }
 
     private showTooltip(x: number, y: number, content: string) {
@@ -160,6 +233,31 @@ export class Visual implements IVisual {
 
     public update(options: VisualUpdateOptions) {
         const ns = "http://www.w3.org/2000/svg";
+        
+        // Vérifier la licence avant de continuer
+        this.checkLicense();
+        
+        // Si la licence n'est pas valide, afficher un message et arrêter
+        if (!this.isLicenseValid) {
+            // Nettoyer le visuel
+            while (this.axisGroup.firstChild) this.axisGroup.removeChild(this.axisGroup.firstChild);
+            while (this.linesGroup.firstChild) this.linesGroup.removeChild(this.linesGroup.firstChild);
+            
+            this.svg.setAttribute("width", options.viewport.width.toString());
+            this.svg.setAttribute("height", options.viewport.height.toString());
+            
+            // Créer un message au centre
+            const centerMessage = document.createElementNS(ns, "text");
+            centerMessage.setAttribute("x", (options.viewport.width / 2).toString());
+            centerMessage.setAttribute("y", (options.viewport.height / 2).toString());
+            centerMessage.setAttribute("text-anchor", "middle");
+            centerMessage.setAttribute("fill", "#856404");
+            centerMessage.setAttribute("font-size", "14px");
+            centerMessage.textContent = "Licence Power BI requise";
+            this.axisGroup.appendChild(centerMessage);
+            
+            return;
+        }
         
         // A. Récupération des données
         const dataView = options.dataViews[0];

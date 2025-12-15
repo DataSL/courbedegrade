@@ -138,5 +138,11 @@
       }
     }
   },
-  "privileges": []
+  "privileges": [
+    {
+      "name": "WebAccess",
+      "essential": true,
+      "parameters": ["*"]
+    }
+  ]
 }
