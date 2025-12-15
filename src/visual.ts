@@ -161,10 +161,16 @@ export class Visual implements IVisual {
                 });
                 
                 if (isLicenseInfoAvailable && !isLicenseUnsupportedEnv) {
-                    // Filtrer uniquement les plans actifs ou en avertissement
-                    this.currentUserValidPlans = plans?.filter(({ state }) => 
-                        state === ServicePlanState.Active || state === ServicePlanState.Warning
-                    );
+                    // Filtrer uniquement les plans actifs
+                    this.currentUserValidPlans = plans?.filter(({ state, spIdentifier }) => {
+                        // Vérifier que c'est bien un de VOS plans
+                        const validIdentifiers = [
+                            "customtableplan"   // ← Remplacer par votre vrai ID
+                        ];
+                        
+                        return validIdentifiers.includes(spIdentifier) && 
+                               (state === ServicePlanState.Active || state === ServicePlanState.Warning);
+                    });
                     this.hasServicePlans = !!this.currentUserValidPlans?.length;
                     
                     if (this.hasServicePlans) {
