@@ -5,14 +5,14 @@
     "guid": "courbedegrade0E5B94303DBB4B71884B9B500B8496FB",
     "visualClassName": "Visual",
     "version": "1.0.0.0",
-    "description": "courbeperso",
-    "supportUrl": "https://github.com/lebloisalexan/courbedegrade",
-    "gitHubUrl": "https://github.com/lebloisalexan/courbedegrade"
+    "description": "Display your data as a smooth line chart with customizable color gradients. Perfect for visualizing trends, comparing time series, and highlighting the evolution of your key metrics in Power BI. Advanced formatting options and easy integration.",
+    "supportUrl": "data-slconsulting.com",
+    "gitHubUrl": ""
   },
   "apiVersion": "5.3.0",
   "author": {
     "name": "Alexan Leblois",
-    "email": "lebloisalexan@gmail.com"
+    "email": "alexan@data-slconsulting.com"
   },
   "assets": {
     "icon": "assets/icon.png"
