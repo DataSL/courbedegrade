@@ -758,10 +758,10 @@ export class Visual implements IVisual {
             // Construction du chemin
             let d = stepped ? this.buildSteppedPath(points) : this.buildSmoothPath(points);
 
-            // Aire
+            // Aire - Le dégradé s'arrête au bas de la zone de dessin, juste avant les labels de l'axe X
             const pathArea = document.createElementNS(ns, "path");
-            const yZero = getYPos(0);
-            const areaD = `${d} L ${points[points.length-1][0]},${yZero} L ${points[0][0]},${yZero} Z`;
+            const gradientBottom = drawH ; // S'arrête 5px avant le bas pour ne pas toucher les labels
+            const areaD = `${d} L ${points[points.length-1][0]},${gradientBottom} L ${points[0][0]},${gradientBottom} Z`;
             pathArea.setAttribute("d", areaD);
             pathArea.setAttribute("fill", showGradient ? `url(#${gradientId})` : "none");
             pathArea.setAttribute("stroke", "none");
