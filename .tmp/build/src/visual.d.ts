@@ -10,6 +10,7 @@ export declare class Visual implements IVisual {
     private axisGroup;
     private linesGroup;
     private tooltip;
+    private static _labelMeasureCanvas;
     private margin;
     private formattingSettings;
     private formattingSettingsService;

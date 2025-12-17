@@ -25,6 +25,9 @@ export class Visual implements IVisual {
     private linesGroup: SVGGElement;
     private tooltip: HTMLDivElement;
     
+    // Cached canvas for text measurement (used for label truncation)
+    private static _labelMeasureCanvas: HTMLCanvasElement | null = null;
+    
     // Marges
     private margin = { top: 20, right: 40, bottom: 40, left: 60 };
     
@@ -117,7 +120,7 @@ export class Visual implements IVisual {
     private retrieveLicenseInfo() {
         // 🔓 MODE DÉVELOPPEMENT : Désactiver complètement la vérification de licence
         // Décommentez la ligne suivante pour activer le système de licensing en production
-        this.checkLicenseInProduction();
+        //this.checkLicenseInProduction();
         
         // En mode développement, toujours considérer que la licence est valide
         console.log("🔓 Mode développement : Vérification de licence désactivée");
@@ -310,7 +313,7 @@ export class Visual implements IVisual {
 
         this.tooltip.style.display = "block";
         this.tooltip.style.left = (x + 10) + "px";
-        this.tooltip.style.top = (y - 10) + "px";
+        this.tooltip.style.top = (y + 10) + "px";
     }
 
     private hideTooltip() {
@@ -408,6 +411,10 @@ export class Visual implements IVisual {
         // B. Calcul des dimensions
         const width = options.viewport.width;
         const height = options.viewport.height;
+        
+        // Réinitialiser les marges à chaque update pour éviter l'accumulation
+        this.margin = { top: 20, right: 40, bottom: 40, left: 60 };
+        
         let legendHeight = 0;
         
         if (showLegend && (legendPosition === "Top" || legendPosition === "TopCenter")) {
@@ -416,10 +423,10 @@ export class Visual implements IVisual {
         } else if (showLegend && (legendPosition === "Bottom" || legendPosition === "BottomCenter")) {
             legendHeight = 30;
             this.margin.bottom = 40 + legendHeight;
-        } else {
-            this.margin.top = 20;
-            this.margin.bottom = 40;
         }
+
+        // Ajustement pour les labels rotés à 45° (toujours appliqué maintenant)
+        this.margin.bottom += 30;
 
         // Ajustement dynamique de la marge basse si on a 3 niveaux ou plus (pour afficher Année/Mois/Jour)
         if (categoryColumns.length > 2) {
@@ -505,7 +512,10 @@ export class Visual implements IVisual {
 
         // 2. AXE X
         if (showXAxis) {
-            const step = Math.ceil(cats.length / 10); 
+            const step = Math.ceil(cats.length / 10);
+            const createdTexts: SVGTextElement[] = [];
+            const labelIndices: number[] = [];
+
             cats.forEach((cat, i) => {
                 if (i % step !== 0 && i !== cats.length - 1) return; 
                 
@@ -523,9 +533,10 @@ export class Visual implements IVisual {
                     this.axisGroup.appendChild(line);
                 }
 
-                const text = document.createElementNS(ns, "text");
+                const text = document.createElementNS(ns, "text") as SVGTextElement;
                 text.setAttribute("x", xPos.toString());
                 text.setAttribute("y", (drawH + 20).toString());
+                text.setAttribute('data-x', xPos.toString());
                 
                 if (i === cats.length - 1) text.setAttribute("text-anchor", "end");
                 else if (i === 0) text.setAttribute("text-anchor", "start");
@@ -594,11 +605,85 @@ export class Visual implements IVisual {
                         text.appendChild(tspan2);
                     }
                 } else {
-                    text.textContent = this.formatDate(cats[i].toString());
+                    const label = this.formatDate(cats[i].toString());
+                    text.textContent = label;
+                    text.setAttribute('data-label', label);
                 }
                 
                 this.axisGroup.appendChild(text);
+                createdTexts.push(text);
+                labelIndices.push(i);
             });
+
+            // Intelligent truncation with 45° rotation
+            try {
+                const padding = 6; // px padding between labels
+                const canvas = Visual._labelMeasureCanvas || (Visual._labelMeasureCanvas = document.createElement('canvas'));
+                const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+                ctx.font = `${xAxisFontSize}px ${xAxisFontFamily}`;
+
+                const xs = createdTexts.map(t => parseFloat(t.getAttribute('data-x') || t.getAttribute('x') || '0'));
+                const angle = -45; // Rotation angle in degrees
+
+                // Step 1: Truncate labels that are too wide and apply 45° rotation
+                for (let i = 0; i < createdTexts.length; i++) {
+                    const t = createdTexts[i];
+                    // Skip multi-line hierarchical labels (they use tspans)
+                    if (t.childNodes.length > 1) continue;
+
+                    const raw = t.getAttribute('data-label') || t.textContent || '';
+                    const x = xs[i];
+                    const left = (i === 0) ? 0 : (xs[i - 1] + x) / 2;
+                    const right = (i === createdTexts.length - 1) ? drawW : (x + xs[i + 1]) / 2;
+                    const avail = Math.max(10, right - left - padding * 2);
+
+                    // Measure and truncate if necessary (keep beginning, add '...' at end)
+                    let width = ctx.measureText(raw).width;
+                    if (width > avail) {
+                        let startLen = raw.length;
+                        let candidate = raw;
+                        const ellipsis = '...';
+                        // Keep reducing from the end until it fits
+                        while (startLen > 0) {
+                            candidate = raw.slice(0, startLen) + ellipsis;
+                            width = ctx.measureText(candidate).width;
+                            if (width <= avail) break;
+                            startLen--;
+                        }
+                        t.textContent = candidate;
+                    }
+
+                    // Apply 45° rotation to all labels
+                    const origX = parseFloat(t.getAttribute('data-x') || '0');
+                    const origY = parseFloat(t.getAttribute('y') || (drawH + 20).toString());
+                    t.setAttribute('text-anchor', 'end');
+                    t.setAttribute('transform', `translate(${origX}, ${origY}) rotate(${angle})`);
+                    t.setAttribute('x', '0');
+                    t.setAttribute('y', '0');
+                }
+
+                // Step 2: Check for overlaps using bounding boxes (after rotation)
+                let hasOverlap = false;
+                const boxes = createdTexts.map(t => t.getBBox());
+
+                for (let k = 1; k < boxes.length; k++) {
+                    const prev = boxes[k - 1];
+                    const curr = boxes[k];
+                    if (curr.x < prev.x + prev.width + padding) {
+                        hasOverlap = true;
+                        break;
+                    }
+                }
+
+                // Step 3: If overlap detected, hide the last label (the one at the right edge)
+                if (hasOverlap && createdTexts.length > 1) {
+                    const last = createdTexts[createdTexts.length - 1];
+                    if (last) last.style.display = 'none';
+                }
+            } catch (err) {
+                // getBBox/canvas might fail in some non-rendering environments; ignore silently
+                console.warn('X-axis label truncation/overlap detection skipped:', err);
+            }
         }
 
         // 3. BOUCLE SUR LES SÉRIES (LIGNES)
