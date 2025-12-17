@@ -635,7 +635,11 @@ export class Visual implements IVisual {
                     const x = xs[i];
                     const left = (i === 0) ? 0 : (xs[i - 1] + x) / 2;
                     const right = (i === createdTexts.length - 1) ? drawW : (x + xs[i + 1]) / 2;
-                    const avail = Math.max(10, right - left - padding * 2);
+                    
+                    // With 45° rotation, labels can be much longer
+                    // Calculate available space considering rotation: diagonal space is ~1.4x horizontal space
+                    const horizontalSpace = right - left - padding * 2;
+                    const avail = Math.max(30, horizontalSpace * 2.5); // More generous space for rotated labels
 
                     // Measure and truncate if necessary (keep beginning, add '...' at end)
                     let width = ctx.measureText(raw).width;
