@@ -193,6 +193,17 @@ class XAxisSettingsCard extends FormattingSettingsCard {
         placeholder: "Titre de l'axe X"
     });
 
+    sortOrder = new formattingSettings.ItemDropdown({
+        name: "sortOrder",
+        displayName: "Ordre de tri",
+        items: [
+            { value: "ascending", displayName: "Croissant" },
+            { value: "descending", displayName: "Décroissant" },
+            { value: "byValue", displayName: "Par valeur Y (max → min)" }
+        ],
+        value: { value: "ascending", displayName: "Croissant" }
+    });
+
     name: string = "xAxisSettings";
     displayName: string = "Axe X";
     slices: Array<FormattingSettingsSlice> = [
@@ -201,7 +212,8 @@ class XAxisSettingsCard extends FormattingSettingsCard {
         this.fontSize,
         this.fontFamily,
         this.title,
-        this.titleText
+        this.titleText,
+        this.sortOrder
     ];
 }
 

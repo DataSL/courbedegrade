@@ -89,7 +89,8 @@
         "fontSize": { "type": { "numeric": true } },
         "fontFamily": { "type": { "enumeration": [ { "value": "Segoe UI", "displayName": "Segoe UI" }, { "value": "Arial", "displayName": "Arial" }, { "value": "Courier New", "displayName": "Courier New" }, { "value": "Georgia", "displayName": "Georgia" }, { "value": "Verdana", "displayName": "Verdana" } ] } },
         "title": { "type": { "bool": true } },
-        "titleText": { "type": { "text": true } }
+        "titleText": { "type": { "text": true } },
+        "sortOrder": { "type": { "enumeration": [ { "value": "ascending", "displayName": "Croissant" }, { "value": "descending", "displayName": "Décroissant" }, { "value": "byValue", "displayName": "Par valeur Y (max → min)" } ] } }
       }
     },
     "yAxisSettings": {

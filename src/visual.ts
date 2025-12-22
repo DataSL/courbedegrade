@@ -388,6 +388,66 @@ export class Visual implements IVisual {
         const xAxisColor = this.formattingSettings.xAxisSettings.axisColor.value.value;
         const xAxisFontSize = this.formattingSettings.xAxisSettings.fontSize.value;
         const xAxisFontFamily = this.formattingSettings.xAxisSettings.fontFamily.value.value.toString();
+        const sortOrder = this.formattingSettings.xAxisSettings.sortOrder.value.value.toString();
+        
+        // Appliquer le tri sur les données
+        let sortedIndices = Array.from({ length: cats.length }, (_, i) => i);
+        
+        if (sortOrder === "ascending") {
+            // Tri croissant par catégorie
+            sortedIndices.sort((a, b) => {
+                const valA = cats[a];
+                const valB = cats[b];
+                if (valA < valB) return -1;
+                if (valA > valB) return 1;
+                return 0;
+            });
+        } else if (sortOrder === "descending") {
+            // Tri décroissant par catégorie
+            sortedIndices.sort((a, b) => {
+                const valA = cats[a];
+                const valB = cats[b];
+                if (valA > valB) return -1;
+                if (valA < valB) return 1;
+                return 0;
+            });
+        } else if (sortOrder === "byValue") {
+            // Tri par la valeur Y la plus haute (max de toutes les séries pour chaque catégorie)
+            sortedIndices.sort((a, b) => {
+                let maxA = Number.NEGATIVE_INFINITY;
+                let maxB = Number.NEGATIVE_INFINITY;
+                
+                // Trouver la valeur max pour la catégorie a
+                allSeries.forEach(series => {
+                    const val = Number(series.values[a]);
+                    if (!isNaN(val) && val > maxA) maxA = val;
+                });
+                
+                // Trouver la valeur max pour la catégorie b
+                allSeries.forEach(series => {
+                    const val = Number(series.values[b]);
+                    if (!isNaN(val) && val > maxB) maxB = val;
+                });
+                
+                // Trier par valeur décroissante (plus haute en premier)
+                return maxB - maxA;
+            });
+        }
+        
+        // Réorganiser les catégories et les valeurs selon l'ordre de tri
+        const sortedCats = sortedIndices.map(i => cats[i]);
+        const sortedAllSeries = allSeries.map(series => ({
+            ...series,
+            values: sortedIndices.map(i => series.values[i])
+        }));
+        
+        // Remplacer les données par les données triées
+        const originalCats = cats;
+        const originalAllSeries = allSeries;
+        
+        // Utiliser les données triées pour le reste du code
+        const catsToUse = sortedCats;
+        const allSeriesToUse = sortedAllSeries;
         
         const showYAxis = this.formattingSettings.yAxisSettings.show.value;
         const yAxisColor = this.formattingSettings.yAxisSettings.axisColor.value.value;
@@ -440,7 +500,7 @@ export class Visual implements IVisual {
         // C. CALCUL ÉCHELLE Y GLOBALE (Basé sur le MIN et MAX de TOUTES les séries)
         let globalMax = Number.NEGATIVE_INFINITY;
         let globalMin = Number.POSITIVE_INFINITY;
-        allSeries.forEach(series => {
+        allSeriesToUse.forEach(series => {
             series.values.forEach(v => {
                 const val = Number(v);
                 if (!isNaN(val)) {
@@ -512,14 +572,14 @@ export class Visual implements IVisual {
 
         // 2. AXE X
         if (showXAxis) {
-            const step = Math.ceil(cats.length / 10);
+            const step = Math.ceil(catsToUse.length / 10);
             const createdTexts: SVGTextElement[] = [];
             const labelIndices: number[] = [];
 
-            cats.forEach((cat, i) => {
-                if (i % step !== 0 && i !== cats.length - 1) return; 
+            catsToUse.forEach((cat, i) => {
+                if (i % step !== 0 && i !== catsToUse.length - 1) return; 
                 
-                const xPos = (i / (cats.length - 1)) * drawW;
+                const xPos = (i / (catsToUse.length - 1)) * drawW;
 
                 if (showVerticalGrid) {
                     const line = document.createElementNS(ns, "line");
@@ -538,7 +598,7 @@ export class Visual implements IVisual {
                 text.setAttribute("y", (drawH + 20).toString());
                 text.setAttribute('data-x', xPos.toString());
                 
-                if (i === cats.length - 1) text.setAttribute("text-anchor", "end");
+                if (i === catsToUse.length - 1) text.setAttribute("text-anchor", "end");
                 else if (i === 0) text.setAttribute("text-anchor", "start");
                 else text.setAttribute("text-anchor", "middle");
                 
@@ -548,9 +608,11 @@ export class Visual implements IVisual {
                 text.setAttribute("cursor", "pointer");
 
                 // Ajouter le menu contextuel sur les labels de l'axe X
+                // Note: utiliser l'index original pour la sélection
+                const originalIndex = sortedIndices[i];
                 text.addEventListener('contextmenu', (event: MouseEvent) => {
                     const selectionId = this.host.createSelectionIdBuilder()
-                        .withCategory(category, i)
+                        .withCategory(category, originalIndex)
                         .createSelectionId();
                     this.selectionManager.showContextMenu(selectionId, {
                         x: event.clientX,
@@ -563,7 +625,7 @@ export class Visual implements IVisual {
                 // Permettre la sélection au clic sur les labels
                 text.addEventListener('click', (event: MouseEvent) => {
                     const selectionId = this.host.createSelectionIdBuilder()
-                        .withCategory(category, i)
+                        .withCategory(category, originalIndex)
                         .createSelectionId();
                     this.selectionManager.select(selectionId, event.ctrlKey || event.metaKey);
                     event.stopPropagation();
@@ -605,7 +667,7 @@ export class Visual implements IVisual {
                         text.appendChild(tspan2);
                     }
                 } else {
-                    const label = this.formatDate(cats[i].toString());
+                    const label = this.formatDate(catsToUse[i].toString());
                     text.textContent = label;
                     text.setAttribute('data-label', label);
                 }
@@ -701,7 +763,7 @@ export class Visual implements IVisual {
         const dataLabelsDisplayUnits = parseInt(this.formattingSettings.dataLabels.displayUnits.value.value.toString());
         const dataLabelsPrecision = this.formattingSettings.dataLabels.precision.value;
 
-        allSeries.forEach((series, index) => {
+        allSeriesToUse.forEach((series, index) => {
             if (index >= 10) return;
 
             const seriesName = series.source.displayName;
@@ -727,8 +789,8 @@ export class Visual implements IVisual {
             legendItems.push({ name: seriesName, color: lineColor });
 
             // Calcul des points
-            const points: [number, number][] = cats.map((cat, i) => {
-                const x = (i / (cats.length - 1)) * drawW;
+            const points: [number, number][] = catsToUse.map((cat, i) => {
+                const x = (i / (catsToUse.length - 1)) * drawW;
                 const y = getYPos(Number(vals[i]));
                 return [x, y];
             });
@@ -815,9 +877,10 @@ export class Visual implements IVisual {
 
             // Zones de survol (Tooltip) avec support du drill
             points.forEach((p, i) => {
-                // Créer l'ID de sélection pour ce point
+                // Créer l'ID de sélection pour ce point - utiliser l'index original
+                const originalIndex = sortedIndices[i];
                 const selectionId = this.host.createSelectionIdBuilder()
-                    .withCategory(category, i)
+                    .withCategory(category, originalIndex)
                     .createSelectionId();
 
                 const hoverCircle = document.createElementNS(ns, "circle");
@@ -831,9 +894,9 @@ export class Visual implements IVisual {
                 hoverCircle.addEventListener("mouseenter", (e: MouseEvent) => {
                     let tooltipTitle = "";
                     if (categoryColumns.length > 1) {
-                        tooltipTitle = categoryColumns.map(c => c.values[i].toString()).join(" ");
+                        tooltipTitle = categoryColumns.map(c => c.values[originalIndex].toString()).join(" ");
                     } else {
-                        tooltipTitle = this.formatDate(cats[i].toString());
+                        tooltipTitle = this.formatDate(catsToUse[i].toString());
                     }
 
                     const tooltipContent = `<div><strong>${tooltipTitle}</strong></div><div>${seriesName}: ${this.formatNumber(Number(vals[i]))}</div>`;

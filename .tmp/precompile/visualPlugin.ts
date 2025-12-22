@@ -9,7 +9,7 @@ var courbedegrade0E5B94303DBB4B71884B9B500B8496FB_DEBUG: IVisualPlugin = {
     name: 'courbedegrade0E5B94303DBB4B71884B9B500B8496FB_DEBUG',
     displayName: 'courbedegrade',
     class: 'Visual',
-    apiVersion: '5.3.0',
+    apiVersion: '5.10.0',
     create: (options?: VisualConstructorOptions) => {
         if (Visual) {
             return new Visual(options);
