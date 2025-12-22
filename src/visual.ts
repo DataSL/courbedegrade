@@ -390,23 +390,98 @@ export class Visual implements IVisual {
         const xAxisFontFamily = this.formattingSettings.xAxisSettings.fontFamily.value.value.toString();
         const sortOrder = this.formattingSettings.xAxisSettings.sortOrder.value.value.toString();
         
+        // Dictionnaire des mois pour tri chronologique (français + anglais)
+        const monthMap: { [key: string]: number } = {
+            // Français
+            'janvier': 1, 'février': 2, 'mars': 3, 'avril': 4, 'mai': 5, 'juin': 6,
+            'juillet': 7, 'août': 8, 'septembre': 9, 'octobre': 10, 'novembre': 11, 'décembre': 12,
+            // Anglais
+            'january': 1, 'february': 2, 'march': 3, 'april': 4, 'may': 5, 'june': 6,
+            'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12,
+            // Abréviations françaises
+            'janv': 1, 'févr': 2, 'avr': 4, 'juil': 7, 'sept': 9, 'oct': 10, 'nov': 11, 'déc': 12,
+            // Abréviations anglaises
+            'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'jun': 6, 'jul': 7, 'aug': 8, 'sep': 9, 'dec': 12
+        };
+        
         // Appliquer le tri sur les données
         let sortedIndices = Array.from({ length: cats.length }, (_, i) => i);
         
-        if (sortOrder === "ascending") {
-            // Tri croissant par catégorie
+        // Debug : afficher les données brutes pour vérifier leur type
+        console.log("🔍 DEBUG Tri - Mode:", sortOrder);
+        console.log("🔍 DEBUG Tri - Toutes les catégories:", cats.map((c, i) => `[${i}] ${c} (${typeof c})`).join(", "));
+        
+        if (sortOrder === "dateChronological") {
+            // Tri chronologique spécifique pour les dates
             sortedIndices.sort((a, b) => {
                 const valA = cats[a];
                 const valB = cats[b];
+                
+                // Si ce sont des objets Date natifs
+                if (valA instanceof Date && valB instanceof Date) {
+                    return valA.getTime() - valB.getTime();
+                }
+                
+                // Si ce sont des strings de mois, utiliser le dictionnaire
+                if (typeof valA === 'string' && typeof valB === 'string') {
+                    const monthA = monthMap[valA.toLowerCase().trim()];
+                    const monthB = monthMap[valB.toLowerCase().trim()];
+                    
+                    if (monthA !== undefined && monthB !== undefined) {
+                        return monthA - monthB; // Tri par numéro de mois
+                    }
+                }
+                
+                // Sinon, convertir en dates si possible (ignorer les booléens)
+                let dateA: Date;
+                let dateB: Date;
+                
+                if (valA instanceof Date) {
+                    dateA = valA;
+                } else if (typeof valA === 'string' || typeof valA === 'number') {
+                    dateA = new Date(valA);
+                } else {
+                    dateA = new Date(NaN);
+                }
+                
+                if (valB instanceof Date) {
+                    dateB = valB;
+                } else if (typeof valB === 'string' || typeof valB === 'number') {
+                    dateB = new Date(valB);
+                } else {
+                    dateB = new Date(NaN);
+                }
+                
+                const timeA = dateA.getTime();
+                const timeB = dateB.getTime();
+                
+                if (!isNaN(timeA) && !isNaN(timeB)) {
+                    return timeA - timeB;
+                }
+                
+                // Fallback sur comparaison standard
+                if (valA < valB) return -1;
+                if (valA > valB) return 1;
+                return 0;
+            });
+        } else if (sortOrder === "ascending") {
+            // Tri croissant alphanumérique (sans détection de dates)
+            sortedIndices.sort((a, b) => {
+                const valA = cats[a];
+                const valB = cats[b];
+                
+                // Comparaison alphanumérique standard
                 if (valA < valB) return -1;
                 if (valA > valB) return 1;
                 return 0;
             });
         } else if (sortOrder === "descending") {
-            // Tri décroissant par catégorie
+            // Tri décroissant alphanumérique (sans détection de dates)
             sortedIndices.sort((a, b) => {
                 const valA = cats[a];
                 const valB = cats[b];
+                
+                // Comparaison alphanumérique standard
                 if (valA > valB) return -1;
                 if (valA < valB) return 1;
                 return 0;
@@ -820,9 +895,9 @@ export class Visual implements IVisual {
             // Construction du chemin
             let d = stepped ? this.buildSteppedPath(points) : this.buildSmoothPath(points);
 
-            // Aire - Le dégradé s'arrête au bas de la zone de dessin, juste avant les labels de l'axe X
+            // Aire - Le dégradé descend jusqu'à la base de l'axe X (inclut les labels)
             const pathArea = document.createElementNS(ns, "path");
-            const gradientBottom = drawH ; // S'arrête 5px avant le bas pour ne pas toucher les labels
+            const gradientBottom = drawH * 1.4 + 10; // Descend jusqu'aux labels de l'axe X
             const areaD = `${d} L ${points[points.length-1][0]},${gradientBottom} L ${points[0][0]},${gradientBottom} Z`;
             pathArea.setAttribute("d", areaD);
             pathArea.setAttribute("fill", showGradient ? `url(#${gradientId})` : "none");

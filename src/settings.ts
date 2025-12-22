@@ -197,11 +197,12 @@ class XAxisSettingsCard extends FormattingSettingsCard {
         name: "sortOrder",
         displayName: "Ordre de tri",
         items: [
+            { value: "dateChronological", displayName: "Chronologique (dates)" },
             { value: "ascending", displayName: "Croissant" },
             { value: "descending", displayName: "Décroissant" },
             { value: "byValue", displayName: "Par valeur Y (max → min)" }
         ],
-        value: { value: "ascending", displayName: "Croissant" }
+        value: { value: "dateChronological", displayName: "Chronologique (dates)" }
     });
 
     name: string = "xAxisSettings";
