@@ -1,0 +1,4 @@
+# Fichiers de compilation et temporaires
+.tmp/
+webpack.statistics.*.html
+pbiviz.json
