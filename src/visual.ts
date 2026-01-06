@@ -4,7 +4,6 @@ import powerbi from "powerbi-visuals-api";
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 import IVisual = powerbi.extensibility.visual.IVisual;
-import ISelectionId = powerbi.visuals.ISelectionId;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
 import IVisualLicenseManager = powerbi.extensibility.IVisualLicenseManager;
 import LicenseInfoResult = powerbi.extensibility.visual.LicenseInfoResult;
@@ -57,8 +56,9 @@ export class Visual implements IVisual {
         this.target.style.position = "relative";
 
         // 1. Création du SVG
+        // eslint-disable-next-line powerbi-visuals/no-http-string
         const ns = "http://www.w3.org/2000/svg";
-        this.svg = document.createElementNS(ns, "svg");
+        this.svg = document.createElementNS(ns, "svg") as SVGSVGElement;
         this.svg.classList.add("chart-container");
         this.target.appendChild(this.svg);
 
@@ -82,9 +82,9 @@ export class Visual implements IVisual {
         this.svg.appendChild(defs);
 
         // 4. Groupes
-        this.mainGroup = document.createElementNS(ns, "g");
-        this.axisGroup = document.createElementNS(ns, "g");
-        this.linesGroup = document.createElementNS(ns, "g");
+        this.mainGroup = document.createElementNS(ns, "g") as SVGGElement;
+        this.axisGroup = document.createElementNS(ns, "g") as SVGGElement;
+        this.linesGroup = document.createElementNS(ns, "g") as SVGGElement;
         
         this.mainGroup.appendChild(this.axisGroup);
         this.mainGroup.appendChild(this.linesGroup);
@@ -335,7 +335,7 @@ export class Visual implements IVisual {
         const maxTicks = 8;
         
         // Tester chaque multiplicateur
-        for (let mult of multipliers) {
+        for (const mult of multipliers) {
             const step = mult * powerOf10;
             const ticks = Math.ceil(maxValue / step);
             
@@ -348,23 +348,30 @@ export class Visual implements IVisual {
         return powerOf10;
     }
 
+    // eslint-disable-next-line max-lines-per-function
     public update(options: VisualUpdateOptions) {
-        const ns = "http://www.w3.org/2000/svg";
+        // Signal rendering started
+        this.host.eventService.renderingStarted(options);
         
-        // Vérifier le statut de la licence
-        // Si aucun plan de service valide, le système de notification Power BI gère l'affichage
-        if (this.hasServicePlans === false || this.isLicenseUnsupportedEnv === true) {
-            // Nettoyer le visuel
-            while (this.axisGroup.firstChild) this.axisGroup.removeChild(this.axisGroup.firstChild);
-            while (this.linesGroup.firstChild) this.linesGroup.removeChild(this.linesGroup.firstChild);
+        try {
+            // eslint-disable-next-line powerbi-visuals/no-http-string
+            const ns = "http://www.w3.org/2000/svg";
             
-            this.svg.setAttribute("width", options.viewport.width.toString());
-            this.svg.setAttribute("height", options.viewport.height.toString());
-            
-            // Les notifications sont gérées par le système Power BI via notifyLicenseRequired()
-            // Pas besoin d'afficher de message personnalisé ici
-            return;
-        }
+            // Vérifier le statut de la licence
+            // Si aucun plan de service valide, le système de notification Power BI gère l'affichage
+            if (this.hasServicePlans === false || this.isLicenseUnsupportedEnv === true) {
+                // Nettoyer le visuel
+                while (this.axisGroup.firstChild) this.axisGroup.removeChild(this.axisGroup.firstChild);
+                while (this.linesGroup.firstChild) this.linesGroup.removeChild(this.linesGroup.firstChild);
+                
+                this.svg.setAttribute("width", options.viewport.width.toString());
+                this.svg.setAttribute("height", options.viewport.height.toString());
+                
+                // Les notifications sont gérées par le système Power BI via notifyLicenseRequired()
+                // Pas besoin d'afficher de message personnalisé ici
+                this.host.eventService.renderingFinished(options);
+                return;
+            }
         
         // A. Récupération des données
         const dataView = options.dataViews[0];
@@ -405,7 +412,7 @@ export class Visual implements IVisual {
         };
         
         // Appliquer le tri sur les données
-        let sortedIndices = Array.from({ length: cats.length }, (_, i) => i);
+        const sortedIndices = Array.from({ length: cats.length }, (_, i) => i);
         
         // Debug : afficher les données brutes pour vérifier leur type
         console.log("🔍 DEBUG Tri - Mode:", sortOrder);
@@ -515,10 +522,6 @@ export class Visual implements IVisual {
             ...series,
             values: sortedIndices.map(i => series.values[i])
         }));
-        
-        // Remplacer les données par les données triées
-        const originalCats = cats;
-        const originalAllSeries = allSeries;
         
         // Utiliser les données triées pour le reste du code
         const catsToUse = sortedCats;
@@ -838,6 +841,7 @@ export class Visual implements IVisual {
         const dataLabelsDisplayUnits = parseInt(this.formattingSettings.dataLabels.displayUnits.value.value.toString());
         const dataLabelsPrecision = this.formattingSettings.dataLabels.precision.value;
 
+        // eslint-disable-next-line max-lines-per-function
         allSeriesToUse.forEach((series, index) => {
             if (index >= 10) return;
 
@@ -874,7 +878,7 @@ export class Visual implements IVisual {
 
             // Création du dégradé unique
             const gradientId = `gradient_${index}_${Date.now()}`; // ID unique
-            let gradient = document.createElementNS(ns, "linearGradient");
+            const gradient = document.createElementNS(ns, "linearGradient") as SVGLinearGradientElement;
             gradient.setAttribute("id", gradientId);
             
             const stop1 = document.createElementNS(ns, "stop");
@@ -893,7 +897,7 @@ export class Visual implements IVisual {
             this.applyGradientDirection(gradient, gradientDirection);
 
             // Construction du chemin
-            let d = stepped ? this.buildSteppedPath(points) : this.buildSmoothPath(points);
+            const d = stepped ? this.buildSteppedPath(points) : this.buildSmoothPath(points);
 
             // Aire - Le dégradé descend jusqu'à la base de l'axe X (inclut les labels)
             const pathArea = document.createElementNS(ns, "path");
@@ -1115,6 +1119,15 @@ export class Visual implements IVisual {
             });
 
             this.svg.appendChild(legendGroup);
+        }
+        
+        // Signal rendering finished successfully
+        this.host.eventService.renderingFinished(options);
+        
+        } catch (error) {
+            // Signal rendering failed
+            this.host.eventService.renderingFailed(options, error);
+            console.error("Visual rendering error:", error);
         }
     }
 
