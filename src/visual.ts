@@ -120,10 +120,9 @@ export class Visual implements IVisual {
     private retrieveLicenseInfo() {
         // 🔓 MODE DÉVELOPPEMENT : Désactiver complètement la vérification de licence
         // Décommentez la ligne suivante pour activer le système de licensing en production
-        //this.checkLicenseInProduction();
+        this.checkLicenseInProduction();
         
-        // En mode développement, toujours considérer que la licence est valide
-        console.log("🔓 Mode développement : Vérification de licence désactivée");
+
         this.hasServicePlans = true;
         this.isLicenseUnsupportedEnv = false;
     }
@@ -145,7 +144,7 @@ export class Visual implements IVisual {
         // return;
         
         if (!this.licenseManager) {
-            console.log("ℹ️ Gestionnaire de licences non disponible - mode Desktop/Dev");
+
             // En mode développement, considérer que la licence est valide
             this.hasServicePlans = true;
             this.isLicenseUnsupportedEnv = false;
@@ -221,7 +220,6 @@ export class Visual implements IVisual {
         // Si on a des plans valides, ne rien afficher
         if (this.hasServicePlans === true) {
             this.isNotificationDisplayed = false;
-            console.log("✅ Licence valide - Visuel fonctionnel");
         }
     }
     
@@ -414,10 +412,7 @@ export class Visual implements IVisual {
         // Appliquer le tri sur les données
         const sortedIndices = Array.from({ length: cats.length }, (_, i) => i);
         
-        // Debug : afficher les données brutes pour vérifier leur type
-        console.log("🔍 DEBUG Tri - Mode:", sortOrder);
-        console.log("🔍 DEBUG Tri - Toutes les catégories:", cats.map((c, i) => `[${i}] ${c} (${typeof c})`).join(", "));
-        
+
         if (sortOrder === "dateChronological") {
             // Tri chronologique spécifique pour les dates
             sortedIndices.sort((a, b) => {

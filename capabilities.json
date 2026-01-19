@@ -22,7 +22,7 @@
             "max": 5
           },
           "measure": {
-            "min": 1,
+            "min": 0,
             "max": 10
           }
         }
