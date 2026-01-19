@@ -894,9 +894,9 @@ export class Visual implements IVisual {
             // Construction du chemin
             const d = stepped ? this.buildSteppedPath(points) : this.buildSmoothPath(points);
 
-            // Aire - Le dégradé descend jusqu'à la base de l'axe X (inclut les labels)
+            // Aire - Le dégradé s'arrête juste au-dessus de l'axe X (à la valeur min de l'échelle Y)
             const pathArea = document.createElementNS(ns, "path");
-            const gradientBottom = drawH * 1.4 + 10; // Descend jusqu'aux labels de l'axe X
+            const gradientBottom = drawH; // S'arrête à la base du graphique (valeur min Y), pas en dessous
             const areaD = `${d} L ${points[points.length-1][0]},${gradientBottom} L ${points[0][0]},${gradientBottom} Z`;
             pathArea.setAttribute("d", areaD);
             pathArea.setAttribute("fill", showGradient ? `url(#${gradientId})` : "none");
