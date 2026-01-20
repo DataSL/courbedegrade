@@ -120,7 +120,7 @@ export class Visual implements IVisual {
     private retrieveLicenseInfo() {
         // 🔓 MODE DÉVELOPPEMENT : Désactiver complètement la vérification de licence
         // Décommentez la ligne suivante pour activer le système de licensing en production
-        this.checkLicenseInProduction();
+        //this.checkLicenseInProduction();
         
 
         this.hasServicePlans = true;
