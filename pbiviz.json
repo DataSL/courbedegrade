@@ -4,7 +4,7 @@
     "displayName": "courbedegrade",
     "guid": "courbedegrade0E5B94303DBB4B71884B9B500B8496FB",
     "visualClassName": "Visual",
-    "version": "1.0.0.1",
+    "version": "1.0.0.2",
     "description": "Display your data as a smooth line chart with customizable color gradients. Perfect for visualizing trends, comparing time series, and highlighting the evolution of your key metrics in Power BI. Advanced formatting options and easy integration.",
     "supportUrl": "data-slconsulting.com",
     "gitHubUrl": ""
